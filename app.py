@@ -94,7 +94,8 @@ def get_system_prompt(doc_type):
 
 # --- 4. CORE LOGIC: CLASSIFY & ANALYZE ---
 def analyze_document(text):
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-pro')
+
     
     # Step A: Classify
     classification_prompt = f"""
