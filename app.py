@@ -1,5 +1,4 @@
-
-    import streamlit as st
+import streamlit as st
 import google.generativeai as genai
 from langchain_community.tools import DuckDuckGoSearchRun, TavilySearchResults
 from PyPDF2 import PdfReader
