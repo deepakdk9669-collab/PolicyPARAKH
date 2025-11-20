@@ -1,17 +1,47 @@
 import streamlit as st
 import google.generativeai as genai
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import DuckDuckGoSearchRun, TavilySearchResults
-from langchain_google_community import GoogleSearchAPIWrapper
 from PyPDF2 import PdfReader
-import os
 import random
-from tenacity import retry, stop_after_attempt, wait_fixed
+import time
 
-# --- 1. CONFIGURATION & SECRETS ---
-st.set_page_config(page_title="PolicyPARAKH", page_icon="🛡️", layout="wide")
+# --- 1. UI CONFIGURATION (Must be first) ---
+st.set_page_config(
+    page_title="PolicyPARAKH Universal",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Robust Secret Retrieval (Handles missing keys gracefully)
+# Custom CSS for "Attractive" UI
+st.markdown("""
+<style>
+    .main {
+        background-color: #0e1117;
+    }
+    h1 {
+        color: #4F8BF9;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 5px;
+        height: 3em;
+        background-color: #4F8BF9;
+        color: white;
+    }
+    .stProgress > div > div > div > div {
+        background-color: #4F8BF9;
+    }
+    div[data-testid="metric-container"] {
+        background-color: #262730;
+        border: 1px solid #464b5c;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 2. SECRETS & SETUP ---
 def get_secret(key_name):
     try:
         return st.secrets[key_name]
@@ -20,187 +50,215 @@ def get_secret(key_name):
 
 GOOGLE_API_KEY = get_secret("GOOGLE_API_KEY")
 TAVILY_API_KEY = get_secret("TAVILY_API_KEY")
-GOOGLE_CSE_ID = get_secret("GOOGLE_CSE_ID")
-GOOGLE_SEARCH_KEY = get_secret("GOOGLE_SEARCH_API_KEY")
 
-# Setup Gemini
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 2. THE IMMORTAL SEARCH TOOL ---
+# --- 3. AGENT TOOLS (THE BRAIN) ---
 def immortal_search(query):
-    """
-    Tries DuckDuckGo -> Google -> Tavily -> Fallback.
-    """
-    results = []
-    
-    # Attempt 1: DuckDuckGo (Free)
+    """Robust search that tries DuckDuckGo first, then Tavily."""
+    ddg = DuckDuckGoSearchRun()
     try:
-        ddg = DuckDuckGoSearchRun()
-        res = ddg.invoke(query)
-        if res: return f"[Source: DuckDuckGo] {res}"
+        # Attempt 1: DuckDuckGo (Free)
+        return f"[Source: DuckDuckGo] {ddg.invoke(query)}"
     except:
-        pass
-
-    # Attempt 2: Tavily (Backup)
-    if TAVILY_API_KEY:
-        try:
-            tavily = TavilySearchResults(api_key=TAVILY_API_KEY)
-            res = tavily.invoke(query)
-            if res: return f"[Source: Tavily] {str(res)}"
-        except:
-            pass
-
+        # Attempt 2: Tavily (Backup)
+        if TAVILY_API_KEY:
+            try:
+                tavily = TavilySearchResults(api_key=TAVILY_API_KEY)
+                return f"[Source: Tavily] {str(tavily.invoke(query))}"
+            except:
+                pass
     return "⚠️ Search unavailable (Network/Quota). Relying on internal logic."
 
-# --- 3. THE "UNIVERSAL" BRAIN (PROMPTS) ---
-def get_system_prompt(doc_type):
-    base_prompt = """
-    You are PolicyPARAKH, an expert Legal Auditor. 
-    Your job is to protect the user by finding HIDDEN TRAPS in this document.
+# --- 4. CORE ANALYSIS LOGIC ---
+def analyze_policy_modern(text):
+    """
+    Main Agent Logic using Gemini 1.5 Flash.
+    Returns: Dictionary with 'score', 'summary', 'risks', 'verdict', 'raw_report'
     """
     
-    if doc_type == "HEALTH":
-        return base_prompt + """
-        FOCUS ON:
-        1. Room Rent Capping (Look for '1% of Sum Insured' or specific limits).
-        2. Co-Payment (Does user pay % of claim?).
-        3. Waiting Periods (Specific diseases like Hernia/Cataract).
-        4. Exclusions (What is NOT covered?).
-        """
-    elif doc_type == "MOTOR":
-        return base_prompt + """
-        FOCUS ON:
-        1. IDV (Insured Declared Value) - Is it too low?
-        2. Zero Depreciation (Is it included?).
-        3. Engine Protection (Is water damage covered?).
-        4. Deductibles (Compulsory amount).
-        """
-    elif doc_type == "LIFE":
-        return base_prompt + """
-        FOCUS ON:
-        1. Suicide Clause (Waiting period).
-        2. Claim Settlement Ratio (Mention recent data).
-        3. Accidental Death Benefit definitions.
-        """
-    else: # CONTRACT
-        return base_prompt + """
-        FOCUS ON:
-        1. Data Privacy (Do they sell data?).
-        2. Termination (Can they cancel without cause?).
-        3. Auto-Renewal (Hidden subscriptions).
-        4. Arbitration (Can you sue them?).
-        """
-
-# --- 4. CORE LOGIC: CLASSIFY & ANALYZE ---
-def analyze_document(text):
-    model = genai.GenerativeModel('gemini-pro')
-
+    # 1. Identify Document Type
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
-    # Step A: Classify
-    classification_prompt = f"""
-    Classify this document into ONE category: HEALTH, MOTOR, LIFE, or CONTRACT.
+    type_prompt = f"""
+    You are an expert classifier. Classify this document text into ONE category: 
+    HEALTH, MOTOR, LIFE, or CONTRACT.
     Only return the word.
     
-    Document Extract: {text[:1000]}...
+    Text snippet: {text[:1000]}...
     """
+    
     try:
-        doc_type = model.generate_content(classification_prompt).text.strip().upper()
+        doc_type = model.generate_content(type_prompt).text.strip().upper()
     except:
-        doc_type = "CONTRACT" # Default
-    
-    # Step B: Search (The Investigator)
-    # We simulate an agent searching for context
-    search_query = ""
-    if "insurance" in text.lower():
-        # Extract company name roughly
-        company_prompt = f"Extract only the Insurance Company Name from this text: {text[:500]}"
-        company = model.generate_content(company_prompt).text.strip()
-        search_query = f"{company} insurance claim settlement ratio complaints 2024"
-    
-    search_data = immortal_search(search_query) if search_query else "No external data needed."
+        doc_type = "CONTRACT" # Fallback
 
-    # Step C: The Deep Audit
-    final_prompt = f"""
-    {get_system_prompt(doc_type)}
+    # 2. Extract Company Name for Search
+    company_prompt = f"Extract only the Insurance Company Name from this text: {text[:500]}"
+    company = model.generate_content(company_prompt).text.strip()
     
-    CONTEXT FROM WEB SEARCH:
-    {search_data}
+    # 3. Perform Background Search
+    search_query = f"{company} insurance claim settlement ratio complaints 2024"
+    search_data = immortal_search(search_query)
+
+    # 4. The Deep Audit Prompt
+    system_prompt = f"""
+    You are PolicyPARAKH, the ultimate insurance auditor.
     
-    DOCUMENT TEXT:
-    {text}
+    DOCUMENT TYPE: {doc_type}
+    SEARCH DATA: {search_data}
     
-    OUTPUT FORMAT (Markdown):
-    # 🛡️ PolicyPARAKH Audit: {doc_type} Mode
-    **Risk Score:** [0-100]/100
+    Your Goal: Find the hidden traps that agents don't tell you.
     
-    ## 🚨 Critical Red Flags (The Traps)
+    Analyze the full text below and output a structured report.
+    
+    Output Format (Strictly follow this):
+    
+    ## 📊 Risk Score
+    [Give a number between 0-100, where 100 is safest, 0 is a scam]
+    
+    ## 🛡️ Verdict
+    [One word: SAFE, CAUTION, or DANGEROUS]
+    
+    ## 🚩 Critical Red Flags
     * [Flag 1]
     * [Flag 2]
     
-    ## ⚖️ The Verdict
-    [Safe/Caution/Dangerous]
+    ## 📝 Executive Summary
+    [A simple 3-line summary for a 10-year-old]
     
-    ## 🔍 Clause-by-Clause Analysis
-    [Detailed breakdown]
+    ## 🔍 Clause-by-Clause Deep Dive
+    [Detailed analysis of Room Rent, Co-Pay, Exclusions, etc.]
     
-    ## 💡 "What If?" Scenario
-    (Create a realistic bad scenario relevant to this doc type and calculate the loss).
+    ## 💡 "What If" Scenario
+    [Create a realistic bad scenario relevant to {doc_type} and calculate the loss]
     """
     
-    response = model.generate_content(final_prompt)
-    return response.text
+    response = model.generate_content(f"{system_prompt}\n\nDOCUMENT TEXT:\n{text}")
+    return response.text, doc_type
 
-# --- 5. THE UI (FRONTEND) ---
+# --- 5. FRONTEND (THE UI) ---
+
 def main():
-    st.title("🛡️ PolicyPARAKH Universal")
-    st.markdown("**The AI That Reads The Fine Print So You Don't Have To.**")
-    
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ Control Panel")
-        st.info("Running in: Universal Swarm Mode")
+        st.title("🛡️ PolicyPARAKH")
         st.markdown("---")
-        st.write("✅ **Health** (Room Rent, Co-pay)")
-        st.write("✅ **Motor** (IDV, Zero-Dep)")
-        st.write("✅ **Life** (Suicide Clause)")
-        st.write("✅ **Contracts** (Privacy, Renewal)")
+        st.caption("Status: **Universal Swarm Mode**")
+        
+        if GOOGLE_API_KEY:
+            st.success("✅ Neural Engine: Online")
+        else:
+            st.error("❌ API Key Missing")
+            
+        st.markdown("### 🧠 Capabilities")
+        st.info("Reading The Fine Print So You Don't Have To.")
+        st.markdown("---")
+        st.markdown("Built by **PanelScripter Core**")
 
-    # File Upload
-    uploaded_file = st.file_uploader("Upload your Policy PDF", type="pdf")
+    # Main Hero Section
+    st.title("PolicyPARAKH Universal")
+    st.markdown("### 🚀 Upload your Policy PDF to Audit")
+    
+    uploaded_file = st.file_uploader("", type="pdf")
 
     if uploaded_file is not None:
-        # Show loading spinner
-        with st.status("🕵️‍♂️ Swarm Agents Activated...", expanded=True) as status:
-            st.write("📄 Reading Document...")
-            pdf_reader = PdfReader(uploaded_file)
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-            
-            st.write("🧠 Classifying Document Type...")
-            st.write("🌐 Checking 'Immortal' Search Tools...")
-            
-            # Run Analysis
-            if GOOGLE_API_KEY:
-                report = analyze_document(text)
-                status.update(label="Audit Complete!", state="complete", expanded=False)
+        # Initialize Session State for Chat
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+        if "audit_done" not in st.session_state:
+            st.session_state.audit_done = False
+        if "full_text" not in st.session_state:
+            st.session_state.full_text = ""
+        
+        # READ PDF
+        if not st.session_state.audit_done:
+            with st.status("🕵️‍♂️ Swarm Agents Working...", expanded=True) as status:
+                st.write("📄 Reading PDF Binary...")
+                pdf_reader = PdfReader(uploaded_file)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text()
+                st.session_state.full_text = text
                 
-                # Display Report
-                st.markdown("---")
+                st.write("🧠 Classifying & analyzing risk vectors...")
+                # CALL THE NEW LOGIC
+                try:
+                    report, doc_type = analyze_policy_modern(text)
+                    st.session_state.report = report
+                    st.session_state.doc_type = doc_type
+                    status.update(label="✅ Audit Complete!", state="complete", expanded=False)
+                    st.session_state.audit_done = True
+                except Exception as e:
+                    st.error(f"Critical Failure: {e}")
+                    st.stop()
+
+        # DISPLAY RESULTS (The "Better UI" part)
+        if st.session_state.audit_done:
+            report = st.session_state.report
+            
+            # Try to extract Score and Verdict for the top metrics
+            try:
+                # Simple parsing (Robust enough for this demo)
+                score_line = [line for line in report.split('\n') if "Risk Score" in line or "0-100" in line][0]
+                # Extract number roughly
+                import re
+                score = re.findall(r'\d+', score_line.split('\n')[1] if '\n' in score_line else report)
+                final_score = score[0] if score else "N/A"
+            except:
+                final_score = "Check Report"
+
+            # Dashboard Row
+            st.divider()
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(label="Doc Type", value=st.session_state.doc_type)
+            with col2:
+                st.metric(label="Calculated Safety Score", value=f"{final_score}/100")
+            with col3:
+                st.metric(label="AI Agent Verdict", value="Processing...")
+            
+            st.divider()
+
+            # TABS LAYOUT
+            tab1, tab2, tab3 = st.tabs(["📊 Visual Report", "💬 Chat with Policy", "📜 Raw Data"])
+            
+            with tab1:
                 st.markdown(report)
                 
-                # Interactive Chat
-                st.markdown("---")
-                st.subheader("💬 Ask the Swarm")
-                user_question = st.text_input("Example: 'What happens if I crash my car?' or 'Is there a waiting period?'")
-                if user_question:
-                    chat_model = genai.GenerativeModel('gemini-1.5-flash')
-                    chat_response = chat_model.generate_content(f"Context: {report}\n\nUser Question: {user_question}\nAnswer:")
-                    st.write(chat_response.text)
-            else:
-                st.error("⚠️ Google API Key missing in Secrets!")
+            with tab2:
+                st.header("💬 Ask the Swarm")
+                st.caption("Ask anything about specific clauses (e.g., 'What is the waiting period?')")
+                
+                # Chat History Display
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+
+                # Chat Input
+                if prompt := st.chat_input("Ask a specific question about this policy..."):
+                    # User message
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
+
+                    # Assistant Response
+                    with st.chat_message("assistant"):
+                        chat_model = genai.GenerativeModel('gemini-1.5-flash')
+                        # Contextualize with the policy text
+                        full_prompt = f"Context: {st.session_state.full_text}\n\nUser Question: {prompt}\n\nAnswer strictly based on the context provided."
+                        
+                        stream_res = chat_model.generate_content(full_prompt)
+                        response = stream_res.text
+                        st.markdown(response)
+                        
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+
+            with tab3:
+                with st.expander("View Extracted Text"):
+                    st.text(st.session_state.full_text)
 
 if __name__ == "__main__":
     main()
-
+    
