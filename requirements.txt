@@ -7,3 +7,4 @@ tavily-python
 google-api-python-client
 pypdf2
 tenacity
+google-generativeai
