@@ -4,68 +4,87 @@ from prompts import MASTER_SYSTEM_PROMPT
 import tools
 import random
 import time
+from google.api_core import exceptions
 
-# --- KEY ROTATION LOGIC ---
-def configure_random_key():
+# --- 1. ROBUST RETRY ENGINE ---
+def run_with_rotation(func_to_run):
     """
-    Randomly selects an API key from the secrets list.
+    Tries to execute 'func_to_run' using every single API key in the list.
+    If Key 1 fails (429), it immediately switches to Key 2, then Key 3...
     """
     try:
-        # Fetch the list from secrets
+        # Load keys from secrets
         keys = st.secrets["API_KEYS"]
-        
-        if isinstance(keys, list) and len(keys) > 0:
-            selected_key = random.choice(keys)
-            # Configure the key
-            genai.configure(api_key=selected_key)
-            return True
-        else:
-            st.error("❌ No API Keys found in secrets.toml list.")
-            return False
-    except Exception as e:
-        st.error(f"❌ Key Config Error: {str(e)}")
-        return False
+        if not isinstance(keys, list):
+            keys = [st.secrets["GOOGLE_API_KEY"]]
+    except:
+        return "❌ System Error: API Keys not found in secrets."
 
+    # Randomize order to distribute load
+    random.shuffle(keys)
+    
+    last_error = None
+
+    # THE LOOP
+    for i, key in enumerate(keys):
+        try:
+            # 1. Configure specific key
+            genai.configure(api_key=key)
+            
+            # 2. Try to run the function
+            return func_to_run()
+            
+        except exceptions.ResourceExhausted:
+            # This is the 429 Error. Log it and CONTINUE to next key.
+            # print(f"Key {i} Exhausted. Switching...") 
+            last_error = f"Key {i} Quota Exceeded"
+            continue 
+            
+        except Exception as e:
+            # If it's a model not found error, also switch key/model
+            last_error = str(e)
+            continue
+
+    # If we exit the loop, ALL keys failed
+    return f"⚠️ All API Keys Failed. Last Error: {last_error}"
+
+# --- 2. MAIN AUDIT FUNCTION ---
 def run_audit(policy_text):
-    # 1. Configure a Fresh Key
-    if not configure_random_key():
-        return "⚠️ System Error: Keys missing."
+    
+    # Step A: Extract Company Name (Cheap Model)
+    def get_name():
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        return model.generate_content(f"Extract Company Name: {policy_text[:1000]}").text.strip()
+    
+    # Run extraction
+    company_name = run_with_rotation(get_name)
+    if "⚠️" in company_name: company_name = "Insurance Company"
 
-    # 2. Use Gemini 2.5 Pro (Since we have multiple keys now!)
-    # We stick to 2.5-pro for stability, but you can try 'gemini-3-pro-preview' if you feel lucky.
-    try:
-        model = genai.GenerativeModel('models/gemini-2.5-pro-preview-05-06')
-    except:
-        model = genai.GenerativeModel('models/gemini-1.5-flash') # Safety backup
-
-    # 3. Extract Company
-    try:
-        name_prompt = f"Extract only the Company Name from this text: {policy_text[:1000]}"
-        company_name = model.generate_content(name_prompt).text.strip()
-    except:
-        company_name = "Insurance Company"
-
-    # 4. Immortal Search
-    search_query = f"{company_name} insurance claim settlement ratio complaints scam review"
+    # Step B: Immortal Search
+    search_query = f"{company_name} insurance claim settlement ratio reviews scam"
     search_data = tools.immortal_search(search_query)
 
-    # 5. Final Analysis
+    # Step C: The Heavy Audit (Using GEMINI 2.5 PRO)
     final_prompt = f"""
     {MASTER_SYSTEM_PROMPT}
     
     ---
-    REAL-WORLD INTELLIGENCE (From Web Search):
+    LIVE MARKET INTELLIGENCE:
     {search_data}
     ---
     
-    DOCUMENT TEXT TO AUDIT:
+    DOCUMENT TEXT:
     {policy_text[:45000]} 
     """
-    
-    try:
+
+    def generate_audit():
+        # CORRECT MODEL ID from your Screenshot
+        # This is the Stable version, which should have the Free Tier active.
+        model = genai.GenerativeModel('models/gemini-2.5-pro') 
+        
         response = model.generate_content(final_prompt)
         return response.text
-        
-    except Exception as e:
-        return f"⚠️ Analysis Failed: {str(e)}. Please try again (different key will be used)."
-        
+
+    # Run with True Rotation
+    return run_with_rotation(generate_audit)
+    
