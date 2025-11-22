@@ -72,16 +72,23 @@ def search_web(query):
 
 def analyze_doc(text, profile_context):
     rotate_key()
-    model = genai.GenerativeModel('models/gemini-1.5-pro')
+    
+    # --- MODEL SELECTION (FORCING 2.5 PRO) ---
+    # We try the standard alias first. If it fails, we fallback to experimental.
+    try:
+        model = genai.GenerativeModel('models/gemini-2.5-pro') 
+    except:
+        # Fallback if the name is slightly different in your region
+        model = genai.GenerativeModel('models/gemini-2.5-pro-preview-05-06')
     
     prompt = f"""
-    ACT AS: PolicyPARAKH, an elite Legal AI.
+    ACT AS: PolicyPARAKH, an elite Legal AI (Powered by Gemini 2.5 Pro).
     
     USER PROFILE (Crucial Context):
     {profile_context}
     
     DOCUMENT TEXT:
-    {text[:40000]}
+    {text[:45000]} 
     
     TASK:
     1. Identify the Document Type.
@@ -95,7 +102,7 @@ def analyze_doc(text, profile_context):
 
 # --- 4. SESSION STATE ---
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am PolicyPARAKH. Upload a document or update your Family Profile in the sidebar to get started."}]
+    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am PolicyPARAKH (Gemini 2.5 Pro Edition). Upload a document or update your Family Profile in the sidebar to get started."}]
 if "history_list" not in st.session_state:
     st.session_state.history_list = ["New Chat"]
 if "user_profile" not in st.session_state:
@@ -104,6 +111,7 @@ if "user_profile" not in st.session_state:
 # --- 5. SIDEBAR (HISTORY & SETTINGS) ---
 with st.sidebar:
     st.title("✨ PolicyPARAKH")
+    st.caption("Model: Gemini 2.5 Pro")
     
     if st.button("➕ New Chat", use_container_width=True):
         st.session_state.messages = [{"role": "assistant", "content": "Ready for a new analysis. Upload a file or ask a question."}]
@@ -115,7 +123,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # PROFILE SETTINGS (User requested this)
+    # PROFILE SETTINGS
     with st.expander("👤 My Family Profile", expanded=True):
         st.markdown("AI will use this to find personalized risks.")
         name = st.text_input("Your Name", st.session_state.user_profile["Name"])
@@ -133,11 +141,10 @@ uploaded_file = st.file_uploader("📎 Attach Policy/Bill (PDF)", type="pdf", la
 
 if uploaded_file:
     # Process PDF immediately upon upload if not already processed
-    # (Simple check to prevent re-processing on every interaction)
     last_msg = st.session_state.messages[-1]["content"]
-    if "Analysis Complete" not in last_msg:
+    if "Analysis Complete" not in last_msg and "Risk Score" not in last_msg:
         with st.chat_message("assistant"):
-            with st.spinner("Reading document & applying Family Context..."):
+            with st.spinner("Reading document & applying Family Context (Gemini 2.5 Pro)..."):
                 pdf = PdfReader(uploaded_file)
                 text = ""
                 for page in pdf.pages: text += page.extract_text() or ""
@@ -146,15 +153,18 @@ if uploaded_file:
                 prof = st.session_state.user_profile
                 context_str = f"User: {prof['Name']}, Age: {prof['Age']}, Family History: {prof['Family']}"
                 
-                # Run Analysis
-                analysis = analyze_doc(text, context_str)
-                
-                # Save to history
-                st.session_state.messages.append({"role": "assistant", "content": analysis})
-                
-                # Update Sidebar History Name
-                if len(st.session_state.history_list) < 5:
-                    st.session_state.history_list.insert(0, "Policy Audit #" + str(random.randint(100,999)))
+                try:
+                    # Run Analysis
+                    analysis = analyze_doc(text, context_str)
+                    # Save to history
+                    st.session_state.messages.append({"role": "assistant", "content": analysis})
+                    
+                    # Update Sidebar History Name
+                    if len(st.session_state.history_list) < 5:
+                        st.session_state.history_list.insert(0, "Policy Audit #" + str(random.randint(100,999)))
+                except Exception as e:
+                    st.error(f"⚠️ Gemini 2.5 Pro Error: {str(e)}")
+                    st.info("Tip: If this fails, Google might have restricted Pro access on your free key. Consider switching back to Flash.")
                 
         st.rerun()
 
@@ -174,9 +184,14 @@ if prompt := st.chat_input("Ask follow-up questions..."):
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             rotate_key()
-            model = genai.GenerativeModel('models/gemini-1.5-flash')
             
-            # Smart Search Trigger: If user asks for reputation/scam
+            # TRYING 2.5 PRO FOR CHAT TOO
+            try:
+                model = genai.GenerativeModel('models/gemini-2.5-pro')
+            except:
+                model = genai.GenerativeModel('models/gemini-1.5-flash') # Backup
+            
+            # Smart Search Trigger
             scam_context = ""
             if "scam" in prompt.lower() or "review" in prompt.lower() or "fraud" in prompt.lower():
                 status_box = st.status("🕵️ Sentinel searching dark web...", expanded=False)
@@ -190,10 +205,12 @@ if prompt := st.chat_input("Ask follow-up questions..."):
             SEARCH INTEL: {scam_context}
             USER QUERY: {prompt}
             
-            Answer directly. If Search Intel is present, use it to warn the user.
+            Answer directly.
             """
-            response = model.generate_content(full_prompt).text
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
-
+            try:
+                response = model.generate_content(full_prompt).text
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            except Exception as e:
+                st.error(f"Error: {e}")
+    
