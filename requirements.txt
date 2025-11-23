@@ -4,6 +4,5 @@ langchain-community
 duckduckgo-search>=6.0.0
 PyPDF2
 plotly
-
-
-
+requests
+streamlit-lottie
