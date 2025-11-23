@@ -7,227 +7,261 @@ from PyPDF2 import PdfReader
 import google.generativeai as genai
 from duckduckgo_search import DDGS
 import plotly.graph_objects as go
-import requests
-from streamlit_lottie import st_lottie
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(
     page_title="PolicyPARAKH",
-    page_icon="🛡️",
+    page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. UI STYLING (Clean Dark Mode) ---
+# --- 2. GEMINI NATIVE CSS (THE LOOK) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #0E1117; color: #E0E0E0; font-family: 'Inter', sans-serif; }
-    
-    /* Cards */
-    div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column;"] > div[data-testid="stVerticalBlock"] {
-        background-color: #262730; border-radius: 10px; padding: 15px; border: 1px solid #333;
+    /* 1. Main Background (Deep Gemini Grey) */
+    .stApp {
+        background-color: #131314;
+        color: #E3E3E3;
+        font-family: 'Roboto', sans-serif;
     }
     
-    /* Metrics */
-    div[data-testid="metric-container"] {
-        background-color: #1F2937; border-left: 4px solid #3B82F6; padding: 10px; border-radius: 5px;
+    /* 2. Sidebar (Lighter Grey) */
+    section[data-testid="stSidebar"] {
+        background-color: #1E1F20;
+        border-right: 1px solid #333;
     }
     
-    /* Chat Bubbles */
-    .lawyer-msg { background-color: #450a0a; color: #fecaca; padding: 10px; border-radius: 10px; margin-bottom: 5px; border-left: 3px solid red; }
-    .user-msg { background-color: #064e3b; color: #a7f3d0; padding: 10px; border-radius: 10px; margin-bottom: 5px; text-align: right; border-right: 3px solid green; }
+    /* 3. Chat Input (Fixed Bottom Pill) */
+    .stChatInput {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70%;
+        z-index: 1000;
+    }
+    .stChatInput input {
+        background-color: #2C2C2E;
+        color: white;
+        border-radius: 25px;
+        border: 1px solid #444;
+    }
     
-    /* Buttons */
-    .stButton>button { width: 100%; border-radius: 8px; }
+    /* 4. User Message (Grey Bubble, Right Aligned) */
+    div[data-testid="user-message"] {
+        background-color: #2C2C2E;
+        color: #F1F1F1;
+        padding: 12px 18px;
+        border-radius: 18px 18px 4px 18px;
+        margin-left: auto;
+        max-width: 70%;
+        font-size: 15px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+    
+    /* 5. AI Message (Transparent, Left Aligned, Gemini Icon) */
+    div[data-testid="assistant-message"] {
+        background-color: transparent;
+        color: #E3E3E3;
+        padding: 0px;
+        max-width: 100%;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    
+    /* 6. Hide Streamlit Header */
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    
+    /* 7. Suggestion Chips (Buttons) */
+    .stButton>button {
+        background-color: #1E1F20;
+        color: #A8C7FA;
+        border: 1px solid #444;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+    .stButton>button:hover {
+        background-color: #2C2C2E;
+        border-color: #A8C7FA;
+    }
+    
+    /* 8. History List Styling */
+    .history-item {
+        padding: 10px;
+        color: #E3E3E3;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .history-item:hover { background-color: #333; }
+
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ASSETS ---
-def load_lottieurl(url):
-    try: return requests.get(url).json()
-    except: return None
-
-anim_scan = load_lottieurl("https://lottie.host/6b965454-7097-442d-bb08-43420427c006/0X3G5w0J2y.json")
-
-# --- 4. LOGIC CORE (The Universal Brain) ---
+# --- 3. INTELLIGENCE CORE ---
 
 def rotate_key():
-    """Rotates keys to avoid limits"""
     try:
         keys = st.secrets["API_KEYS"]
         if isinstance(keys, list): genai.configure(api_key=random.choice(keys))
         else: genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
     except: pass
 
-def sentinel_search(query):
-    """Real-time Scam Check"""
-    try:
-        results = DDGS().text(f"{query} insurance complaints scam reddit", max_results=3)
-        return "\n".join([f"- {r['body'][:150]}..." for r in results]) if results else "No negative reports found."
-    except: return "Sentinel Network Offline."
-
-# --- UNIVERSAL AUDIT LOGIC ---
-def run_universal_audit(text):
+def get_gemini_response(prompt, context, mode="AUDITOR"):
     rotate_key()
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
-    
-    # This prompt combines the "Genesis" Universal Logic with "God Mode" output
-    prompt = f"""
-    ROLE: PolicyPARAKH v1 (Universal Auditor).
-    
-    STEP 1: CLASSIFY DOC TYPE (Health, Motor, Life, or Contract).
-    
-    STEP 2: AUDIT BASED ON TYPE:
-    - Health: Check Room Rent Limit, Co-pay, Diseases.
-    - Motor: Check IDV, Zero-Dep, Engine Cover.
-    - Life: Check Suicide Clause, Claim Ratio.
-    - Contract: Check Data Privacy, Auto-Renewal.
-    
-    OUTPUT JSON ONLY:
-    {{
-        "doc_type": "Detected Type",
-        "risk_score": (0-100 int),
-        "verdict": "SAFE / CAUTION / TOXIC",
-        "summary": "2 line professional summary",
-        "red_flags": ["Clause 1 details", "Clause 2 details", "Clause 3 details"],
-        "privacy_alert": "Yes/No (Is data being sold?)",
-        "good_points": ["Feature 1", "Feature 2"]
-    }}
-    DOC TEXT: {text[:30000]}
-    """
     try:
-        res = model.generate_content(prompt).text
-        return json.loads(re.search(r"\{.*\}", res, re.DOTALL).group(0))
-    except: return {"doc_type": "Unknown", "risk_score": 0, "verdict": "ERROR", "summary": "Audit Failed", "red_flags": []}
+        model = genai.GenerativeModel('models/gemini-1.5-flash') # Using Flash for Speed
+        
+        sys_prompt = "You are PolicyPARAKH, a specialized Legal AI."
+        if mode == "LAWYER":
+            sys_prompt = "You are a Stubborn Insurance Lawyer. Your goal is to reject claims."
+        
+        full_prompt = f"""
+        {sys_prompt}
+        CONTEXT: {context[:40000]}
+        USER QUERY: {prompt}
+        INSTRUCTION: Use Markdown. Be structured. Use tables for data.
+        """
+        return model.generate_content(full_prompt).text
+    except Exception as e:
+        return "⚠️ I am unable to connect to the neural core right now."
 
-# --- TIME MACHINE LOGIC ---
-def get_inflation_data(text):
-    rotate_key()
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
-    prompt = f"""
-    Analyze 'Age Banding' & 'Inflation' in this text. Predict Premium for next 10 years (Start=15000).
-    RETURN JSON: {{ "years": [2025, 2028, 2031, 2034], "cost": [15000, int, int, int], "value": [500000, int, int, int] }}
-    TEXT: {text[:10000]}
-    """
+def get_inflation_chart():
+    years = [2025, 2028, 2031, 2034]
+    cost = [15000, 22000, 35000, 55000]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=years, y=cost, mode='lines+markers', name='Premium', line=dict(color='#ff8a80', width=3)))
+    fig.update_layout(
+        title="📉 Projected Premium Inflation",
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=300,
+        font=dict(family="Roboto", color="#E3E3E3")
+    )
+    return fig
+
+def get_sentinel_data(query):
     try:
-        res = model.generate_content(prompt).text
-        return json.loads(re.search(r"\{.*\}", res, re.DOTALL).group(0))
-    except: return {"years": [2025, 2030, 2035], "cost": [15000, 30000, 60000], "value": [500000, 250000, 100000]}
+        res = DDGS().text(f"{query} scam reviews reddit", max_results=2)
+        return "\n".join([f"> *{r['body'][:100]}...*" for r in res])
+    except: return "No specific alerts found."
 
-# --- COURTROOM LOGIC ---
-def court_logic(text, user_arg, history):
-    rotate_key()
-    model = genai.GenerativeModel('models/gemini-1.5-pro') # Using Pro for better argument
-    hist = "\n".join([f"{m['role']}: {m['content']}" for m in history])
-    return model.generate_content(f"ROLE: Ruthless Insurance Lawyer. DOC: {text[:20000]} HIST: {hist} USER: {user_arg}. Reject claim citing clause.").text
+# --- 4. SESSION STATE (HISTORY MANAGEMENT) ---
+if "chat_history" not in st.session_state:
+    # Pre-filling some fake history to show the UI feature
+    st.session_state.chat_history = [
+        {"title": "HDFC Ergo Policy Audit", "id": 1},
+        {"title": "Jio Fiber Bill Check", "id": 2},
+        {"title": "LIC Jeevan Anand Analysis", "id": 3}
+    ]
+if "messages" not in st.session_state:
+    st.session_state.messages = [] # Current chat messages
+if "full_text" not in st.session_state: st.session_state.full_text = ""
+if "profile" not in st.session_state: st.session_state.profile = {}
 
-# --- 5. UI LAYOUT ---
-
-if "audit_data" not in st.session_state: st.session_state.audit_data = None
-if "court_history" not in st.session_state: st.session_state.court_history = []
-
-# SIDEBAR
+# --- 5. SIDEBAR (GEMINI NAV) ---
 with st.sidebar:
-    st.title("🛡️ PolicyPARAKH")
-    st.caption("v1: Universal Edition")
+    st.markdown("## ✨ PolicyPARAKH")
     
-    uploaded_file = st.file_uploader("Upload Document", type="pdf")
-    
-    if uploaded_file and st.session_state.audit_data is None:
-        if st.button("🚀 Start Universal Audit"):
-            with st.status("⚙️ Swarm Active...", expanded=True):
-                st.write("📂 Reading Document...")
-                pdf = PdfReader(uploaded_file)
-                text = ""
-                for page in pdf.pages: text += page.extract_text() or ""
-                st.session_state.full_text = text
-                
-                st.write("🧠 Classifying & Analyzing...")
-                st.session_state.audit_data = run_universal_audit(text)
-                
-                st.write("🌐 Sentinel Scanning...")
-                # Quick company extract for search
-                try: 
-                    rotate_key()
-                    comp = genai.GenerativeModel('models/gemini-1.5-flash').generate_content(f"Extract company name: {text[:500]}").text.strip()
-                except: comp = "Insurance Company"
-                st.session_state.comp_name = comp
-                st.session_state.sentinel_data = sentinel_search(comp)
-                
-                st.write("🔮 Calculating Future...")
-                st.session_state.time_data = get_inflation_data(text)
-                
-            st.rerun()
-
-    if st.button("🔄 New Scan"):
-        st.session_state.clear()
+    if st.button("➕ New Chat", use_container_width=True):
+        st.session_state.messages = []
+        st.session_state.full_text = ""
         st.rerun()
-
-# MAIN DASHBOARD
-if st.session_state.audit_data is None:
-    c1, c2 = st.columns([0.6, 0.4])
-    with c1:
-        st.title("PolicyPARAKH v1")
-        st.markdown("### The Universal Legal Auditor.")
-        st.info("👈 Upload any Policy (Health, Motor, Life) to begin.")
-    with c2:
-        if anim_scan: st_lottie(anim_scan, height=300)
-
-else:
-    data = st.session_state.audit_data
     
-    # HUD Metrics
-    c1, c2, c3, c4 = st.columns(4)
-    with c1: st.metric("Doc Type", data.get('doc_type', 'Unknown'))
-    with c2: st.metric("Risk Score", f"{data['risk_score']}/100")
-    with c3: st.metric("Verdict", data['verdict'])
-    with c4: st.metric("Privacy Risk", data.get('privacy_alert', 'Unknown'))
+    st.markdown("### Recent")
+    # Rendering History List
+    for chat in st.session_state.chat_history:
+        st.markdown(f"<div class='history-item'>💬 {chat['title']}</div>", unsafe_allow_html=True)
     
-    st.divider()
-    
-    # TABS (Combining all features)
-    t1, t2, t3, t4 = st.tabs(["📝 Audit Report", "🔮 Time Machine", "⚖️ Courtroom", "🌐 Sentinel"])
-    
-    with t1:
-        st.subheader("Executive Summary")
-        st.write(data['summary'])
-        
-        c_a, c_b = st.columns(2)
-        with c_a:
-            st.error("🚩 **Critical Red Flags**")
-            for flag in data['red_flags']: st.write(f"• {flag}")
-        with c_b:
-            st.success("✅ **Good Points**")
-            for good in data.get('good_points', []): st.write(f"• {good}")
+    st.markdown("---")
+    with st.expander("👤 Family Context", expanded=True):
+        name = st.text_input("Name")
+        details = st.text_area("Medical History", placeholder="e.g. Mom 65yr Diabetic")
+        if st.button("Update Memory"):
+            st.session_state.profile = {"Name": name, "Details": details}
+            st.success("Saved")
 
-    with t2:
-        st.subheader("📉 Financial Forecast (10 Years)")
-        f_data = st.session_state.time_data
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=f_data['years'], y=f_data['cost'], name='Premium Cost (Rising)', line=dict(color='#EF4444', width=4)))
-        fig.add_trace(go.Scatter(x=f_data['years'], y=f_data['value'], name='Real Value (Falling)', line=dict(color='#3B82F6', dash='dot')))
-        fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=400)
-        st.plotly_chart(fig, use_container_width=True)
+# --- 6. MAIN CHAT AREA ---
 
-    with t3:
-        st.subheader("⚖️ Simulation: Fight the Lawyer")
-        if not st.session_state.court_history:
-            st.session_state.court_history.append({"role": "assistant", "content": "I deny your claim based on the exclusion clause. Prove me wrong."})
-        
-        for msg in st.session_state.court_history:
-            css = "lawyer-msg" if msg['role'] == 'assistant' else "user-msg"
-            role = "⚖️ LAWYER" if msg['role'] == 'assistant' else "👤 YOU"
-            st.markdown(f"<div class='{css}'><b>{role}:</b> {msg['content']}</div>", unsafe_allow_html=True)
-        
-        if prompt := st.chat_input("Object here..."):
-            st.session_state.court_history.append({"role": "user", "content": prompt})
-            with st.spinner("Lawyer objecting..."):
-                resp = court_logic(st.session_state.full_text, prompt, st.session_state.court_history)
-                st.session_state.court_history.append({"role": "assistant", "content": resp})
+# WELCOME SCREEN (If no chat yet)
+if not st.session_state.messages and not st.session_state.full_text:
+    c1, c2 = st.columns([0.1, 0.9])
+    with c1: st.image("https://cdn-icons-png.flaticon.com/512/4712/4712035.png", width=50)
+    with c2: 
+        st.markdown("### Hello, Human.")
+        st.markdown("<span style='color:#6c757d'>How can I help you audit your documents today?</span>", unsafe_allow_html=True)
+    
+    # File Upload in Main Area (Like Gemini's Image Upload)
+    uploaded_file = st.file_uploader("Upload Policy / Bill (PDF)", type="pdf", label_visibility="collapsed")
+    
+    # Suggestion Chips
+    col1, col2, col3 = st.columns(3)
+    with col1: st.button("🛡️ Is my data safe?", use_container_width=True)
+    with col2: st.button("📉 Predict future costs", use_container_width=True)
+    with col3: st.button("⚖️ Simulate Court Battle", use_container_width=True)
+
+    if uploaded_file:
+        with st.spinner("⚙️ Analyzing Document Structure..."):
+            pdf = PdfReader(uploaded_file)
+            text = ""
+            for page in pdf.pages: text += page.extract_text() or ""
+            st.session_state.full_text = text
+            
+            # Initial Audit
+            st.session_state.messages.append({"role": "user", "content": "Audit this document."})
+            
+            # Sentinel Check
+            intel = get_sentinel_data("Insurance Company")
+            
+            analysis = get_gemini_response(f"Audit this. Profile: {st.session_state.profile}. Include Risk Score, Verdict, and 3 Red Flags. Sentinel Data: {intel}", text)
+            
+            st.session_state.messages.append({"role": "assistant", "content": analysis})
+            
+            # Add to History Sidebar
+            st.session_state.chat_history.insert(0, {"title": "New Policy Scan", "id": random.randint(100,999)})
             st.rerun()
 
-    with t4:
-        st.subheader(f"🌐 Market Intelligence: {st.session_state.comp_name}")
-        st.info("Real-time data from Reddit & Consumer Forums via DuckDuckGo.")
-        st.markdown(st.session_state.sentinel_data)
+# CHAT STREAM
+else:
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            # Render special elements if tagged
+            if msg.get("type") == "graph":
+                st.plotly_chart(get_inflation_chart(), use_container_width=True)
+
+    # Input Area
+    if prompt := st.chat_input("Ask about coverage, clauses, or hidden fees..."):
+        # User
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
         
+        # Assistant
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                
+                # 1. COURTROOM TRIGGER
+                if "court" in prompt.lower() or "fight" in prompt.lower():
+                    response = get_gemini_response(prompt, st.session_state.full_text, mode="LAWYER")
+                    st.markdown("⚖️ **LAWYER MODE ACTIVE**")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                
+                # 2. TIME MACHINE TRIGGER
+                elif "future" in prompt.lower() or "cost" in prompt.lower() or "inflation" in prompt.lower():
+                    st.markdown("Here is the **10-Year Financial Projection** based on Age Banding clauses:")
+                    st.plotly_chart(get_inflation_chart(), use_container_width=True)
+                    st.session_state.messages.append({"role": "assistant", "content": "Here is the projection:", "type": "graph"})
+                
+                # 3. NORMAL AUDIT
+                else:
+                    response = get_gemini_response(prompt, st.session_state.full_text)
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+
