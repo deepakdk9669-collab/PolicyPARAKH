@@ -1,216 +1,294 @@
 import streamlit as st
+from streamlit_lottie import st_lottie
+import requests
 import time
 import random
+import json
+import re
 from PyPDF2 import PdfReader
 import google.generativeai as genai
+import plotly.graph_objects as go
 from langchain_community.tools import DuckDuckGoSearchRun
 
-# --- 1. CONFIGURATION (Gemini Look) ---
+# --- 1. SYSTEM CONFIGURATION ---
 st.set_page_config(
-    page_title="PolicyPARAKH AI",
-    page_icon="✨",
+    page_title="PolicyPARAKH | GOD MODE",
+    page_icon="👁️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. GEMINI-STYLE CSS ---
+# --- 2. UI STYLING (Glassmorphism & Neon) ---
 st.markdown("""
 <style>
     /* Main Background */
-    .stApp { background-color: #131314; color: #E3E3E3; }
-    
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #1E1F20;
-        border-right: 1px solid #333;
+    .stApp {
+        background-color: #050505;
+        background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 70%);
+        font-family: 'Inter', sans-serif;
     }
     
-    /* Chat Input at Bottom */
-    .stChatInput {
-        position: fixed;
-        bottom: 20px;
+    /* Glass Cards */
+    .apex-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
     }
     
-    /* Buttons */
-    .stButton>button {
-        background-color: #2C2C2E; color: white; 
-        border-radius: 20px; border: none; padding: 10px 20px;
-    }
-    .stButton>button:hover { background-color: #444746; }
-    
-    /* User/AI Bubbles */
-    div[data-testid="user-message"] {
-        background-color: #2C2C2E; color: white; border-radius: 15px; padding: 15px;
-    }
-    div[data-testid="assistant-message"] {
-        background-color: #131314; color: white; padding: 15px;
+    /* Status Cards */
+    .safe-card { border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 8px; }
+    .danger-card { border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 8px; }
+
+    /* Terminal Log Text */
+    .console-text {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: #00ff41;
+        line-height: 1.4;
     }
     
-    /* Profile Card in Sidebar */
-    .profile-card {
-        background: #2C2C2E; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #444;
+    /* Headers */
+    h1, h2, h3 { color: #ffffff; font-weight: 600; }
+    .gradient-text {
+        background: linear-gradient(90deg, #4F8BF9, #00ff41);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. LOGIC CORE ---
+# --- 3. ASSETS ---
+def load_lottieurl(url):
+    try:
+        r = requests.get(url)
+        if r.status_code != 200: return None
+        return r.json()
+    except: return None
+
+# Load Animation (Scanner)
+anim_scan = load_lottieurl("https://lottie.host/6b965454-7097-442d-bb08-43420427c006/0X3G5w0J2y.json")
+
+# --- 4. LOGIC CORE (Brain) ---
 
 def rotate_key():
+    """Rotates API keys from Streamlit Secrets to avoid limits."""
     try:
         keys = st.secrets["API_KEYS"]
         if isinstance(keys, list): genai.configure(api_key=random.choice(keys))
         else: genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
     except: pass
 
-def search_web(query):
-    """Safe Search that handles errors"""
-    try:
-        search = DuckDuckGoSearchRun()
-        return search.invoke(f"{query} insurance scam reviews reddit")
-    except:
-        return "⚠️ Network Offline: Could not verify online reputation."
+def agent_log(msg, agent="SYSTEM"):
+    """Logs actions to the sidebar terminal."""
+    ts = time.strftime("%H:%M:%S")
+    st.session_state.logs.insert(0, f"[{ts}] [{agent}] {msg}")
 
-def analyze_doc(text, profile_context):
+# --- AI FUNCTIONS ---
+
+def run_full_audit(text):
     rotate_key()
-    
-    # --- MODEL SELECTION (FORCING 2.5 PRO) ---
-    # We try the standard alias first. If it fails, we fallback to experimental.
-    try:
-        model = genai.GenerativeModel('models/gemini-2.5-pro') 
-    except:
-        # Fallback if the name is slightly different in your region
-        model = genai.GenerativeModel('models/gemini-2.5-pro-preview-05-06')
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    agent_log("Scanning clauses for hidden traps...", "AUDITOR")
     
     prompt = f"""
-    ACT AS: PolicyPARAKH, an elite Legal AI (Powered by Gemini 2.5 Pro).
-    
-    USER PROFILE (Crucial Context):
-    {profile_context}
-    
-    DOCUMENT TEXT:
-    {text[:45000]} 
-    
-    TASK:
-    1. Identify the Document Type.
-    2. Audit it specifically against the User's Profile (e.g., if user has Parents, check Age limits).
-    3. Give a Risk Score (0-100).
-    4. List 3 Critical Red Flags.
-    
-    OUTPUT: Keep it conversational and direct. Use Bold text for emphasis.
+    AUDIT THIS DOCUMENT. RETURN JSON ONLY:
+    {{
+        "risk_score": (0-100 int),
+        "verdict": "SAFE/CAUTION/TOXIC",
+        "summary": "Short executive summary",
+        "bad_clauses": ["Clause 1", "Clause 2"]
+    }}
+    TEXT: {text[:30000]}
     """
-    return model.generate_content(prompt).text
+    try:
+        res = model.generate_content(prompt).text
+        return json.loads(re.search(r"\{.*\}", res, re.DOTALL).group(0))
+    except: return {"risk_score": 0, "verdict": "ERROR", "summary": "Fail", "bad_clauses": []}
 
-# --- 4. SESSION STATE ---
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Hello! I am PolicyPARAKH (Gemini 2.5 Pro Edition). Upload a document or update your Family Profile in the sidebar to get started."}]
-if "history_list" not in st.session_state:
-    st.session_state.history_list = ["New Chat"]
-if "user_profile" not in st.session_state:
-    st.session_state.user_profile = {"Name": "User", "Age": "25", "Family": "None"}
+def run_privacy_scan(text):
+    agent_log("Decrypting data sharing agreements...", "PRIVACY_GUARD")
+    rotate_key()
+    model = genai.GenerativeModel('models/gemini-1.5-pro')
+    prompt = f"""
+    Analyze for DATA PRIVACY. Return JSON:
+    {{
+        "family_data": "Safe" or "Compromised" (Do they ask for family history?),
+        "selling_clause": "No" or "Yes" (Do they sell data to 3rd parties?),
+        "explanation": "Short summary of privacy risks"
+    }}
+    TEXT: {text[:30000]}
+    """
+    try:
+        res = model.generate_content(prompt).text
+        return json.loads(re.search(r"\{.*\}", res, re.DOTALL).group(0))
+    except: return {"family_data": "Unknown", "selling_clause": "Unknown", "explanation": "Error"}
 
-# --- 5. SIDEBAR (HISTORY & SETTINGS) ---
+def predict_future_costs(text):
+    agent_log("Calculating inflation vectors (2025-2035)...", "ARCHITECT")
+    rotate_key()
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    prompt = f"""
+    Predict Premium Cost for next 10 years (Start=15000). Assume 10% inflation.
+    RETURN JSON ONLY:
+    {{
+        "years": [2025, 2028, 2031, 2034],
+        "cost": [15000, (calc), (calc), (calc)],
+        "value": [500000, 400000, 300000, 200000] (Real value dropping)
+    }}
+    TEXT: {text[:20000]}
+    """
+    try:
+        res = model.generate_content(prompt).text
+        return json.loads(re.search(r"\{.*\}", res, re.DOTALL).group(0))
+    except: 
+        return {"years": [2025, 2030, 2035], "cost": [15000, 30000, 60000], "value": [500000, 250000, 100000]}
+
+def get_competitors(text):
+    agent_log("Scouring Dark Web/Forums...", "SENTINEL")
+    search = DuckDuckGoSearchRun()
+    try:
+        rotate_key()
+        m = genai.GenerativeModel('models/gemini-1.5-flash')
+        comp = m.generate_content(f"Extract company name: {text[:500]}").text.strip()
+        res = search.invoke(f"is {comp} insurance a scam reddit reviews")
+        return comp, res
+    except: return "Unknown", "Search Failed"
+
+def court_battle_logic(text, user_arg, history):
+    agent_log("Consulting legal precedents...", "LAWYER")
+    rotate_key()
+    model = genai.GenerativeModel('models/gemini-1.5-pro')
+    hist = str(history)
+    return model.generate_content(f"ROLE: Ruthless Lawyer. DOC: {text[:20000]} HIST: {hist} USER: {user_arg}. Reject claim citing specific clause.").text
+
+# --- 5. UI LAYOUT ---
+
+if "logs" not in st.session_state: st.session_state.logs = []
+if "audit_data" not in st.session_state: st.session_state.audit_data = None
+if "court_history" not in st.session_state: st.session_state.court_history = []
+
+# === SIDEBAR (Neural Terminal) ===
 with st.sidebar:
-    st.title("✨ PolicyPARAKH")
-    st.caption("Model: Gemini 2.5 Pro")
+    st.markdown("### 🧬 NEURAL TERMINAL")
     
-    if st.button("➕ New Chat", use_container_width=True):
-        st.session_state.messages = [{"role": "assistant", "content": "Ready for a new analysis. Upload a file or ask a question."}]
-        st.rerun()
+    # The Black Log Box
+    log_container = st.container()
+    with log_container:
+        st.markdown(
+            f"""<div style='background:#000; border:1px solid #333; height:200px; overflow-y:auto; padding:10px; border-radius:8px;'>
+            {''.join([f"<div class='console-text'>{l}</div>" for l in st.session_state.logs])}
+            </div>""", 
+            unsafe_allow_html=True
+        )
     
-    st.markdown("### 🕒 Recent")
-    for i, chat in enumerate(st.session_state.history_list):
-        st.caption(f"💬 {chat}")
-
     st.markdown("---")
+    uploaded_file = st.file_uploader("Upload Target (PDF)", type="pdf")
     
-    # PROFILE SETTINGS
-    with st.expander("👤 My Family Profile", expanded=True):
-        st.markdown("AI will use this to find personalized risks.")
-        name = st.text_input("Your Name", st.session_state.user_profile["Name"])
-        age = st.text_input("Your Age", st.session_state.user_profile["Age"])
-        family = st.text_area("Family Details (e.g., Mom 65yr diabetic)", st.session_state.user_profile["Family"])
-        
-        if st.button("Save Profile"):
-            st.session_state.user_profile = {"Name": name, "Age": age, "Family": family}
-            st.success("Profile Updated!")
+    if uploaded_file and st.session_state.audit_data is None:
+        if st.button("⚡ ACTIVATE GOD MODE", use_container_width=True):
+            st.session_state.logs = []
+            agent_log("System Initialized.")
+            
+            pdf = PdfReader(uploaded_file)
+            text = ""
+            for page in pdf.pages: text += page.extract_text() or ""
+            st.session_state.full_text = text
+            agent_log(f"Ingested {len(text)} bytes.", "READER")
+            
+            with st.spinner("Swarm Operating..."):
+                # Parallel Execution
+                st.session_state.audit_data = run_full_audit(text)
+                st.session_state.privacy_data = run_privacy_scan(text)
+                st.session_state.future_data = predict_future_costs(text)
+                st.session_state.comp_name, st.session_state.sentinel_data = get_competitors(text)
+            st.rerun()
 
-# --- 6. MAIN CHAT INTERFACE ---
-
-# File Uploader acts as an "Attachment" button
-uploaded_file = st.file_uploader("📎 Attach Policy/Bill (PDF)", type="pdf", label_visibility="collapsed")
-
-if uploaded_file:
-    # Process PDF immediately upon upload if not already processed
-    last_msg = st.session_state.messages[-1]["content"]
-    if "Analysis Complete" not in last_msg and "Risk Score" not in last_msg:
-        with st.chat_message("assistant"):
-            with st.spinner("Reading document & applying Family Context (Gemini 2.5 Pro)..."):
-                pdf = PdfReader(uploaded_file)
-                text = ""
-                for page in pdf.pages: text += page.extract_text() or ""
-                
-                # Build Context String
-                prof = st.session_state.user_profile
-                context_str = f"User: {prof['Name']}, Age: {prof['Age']}, Family History: {prof['Family']}"
-                
-                try:
-                    # Run Analysis
-                    analysis = analyze_doc(text, context_str)
-                    # Save to history
-                    st.session_state.messages.append({"role": "assistant", "content": analysis})
-                    
-                    # Update Sidebar History Name
-                    if len(st.session_state.history_list) < 5:
-                        st.session_state.history_list.insert(0, "Policy Audit #" + str(random.randint(100,999)))
-                except Exception as e:
-                    st.error(f"⚠️ Gemini 2.5 Pro Error: {str(e)}")
-                    st.info("Tip: If this fails, Google might have restricted Pro access on your free key. Consider switching back to Flash.")
-                
+    if st.button("🔄 REBOOT SYSTEM", use_container_width=True):
+        st.session_state.clear()
         st.rerun()
 
-# Display Chat History
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# === MAIN SCREEN ===
 
-# Chat Input (Fixed at Bottom)
-if prompt := st.chat_input("Ask follow-up questions..."):
-    # 1. User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+if st.session_state.audit_data is None:
+    # Landing Page
+    c1, c2 = st.columns([0.6, 0.4])
+    with c1:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("# Policy<span class='gradient-text'>PARAKH</span>", unsafe_allow_html=True)
+        st.markdown("### Neural Legal Defense System")
+        st.markdown("Upload a document to deploy the Swarm Agents.")
+    with c2:
+        if anim_scan: st_lottie(anim_scan, height=400)
 
-    # 2. AI Response
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            rotate_key()
+else:
+    # Dashboard Page
+    data = st.session_state.audit_data
+    
+    # HUD Metrics
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: st.metric("RISK SCORE", f"{data['risk_score']}/100")
+    with c2: st.metric("VERDICT", data['verdict'])
+    with c3: st.metric("TRAPS", len(data['bad_clauses']))
+    with c4: st.metric("ENGINE", "Gemini 2.5")
+    
+    st.markdown("---")
+
+    # Tabs
+    t1, t2, t3, t4, t5 = st.tabs(["📊 AUDIT", "🛡️ PRIVACY", "🔮 TIME MACHINE", "⚖️ COURTROOM", "🌐 SENTINEL"])
+
+    with t1: # Audit
+        st.markdown(f"<div class='apex-card'><h3>📝 EXECUTIVE SUMMARY</h3>{data['summary']}</div>", unsafe_allow_html=True)
+        for flag in data['bad_clauses']:
+            st.markdown(f"<div class='danger-card'>⚠️ {flag}</div>", unsafe_allow_html=True)
+
+    with t2: # Privacy
+        p_data = st.session_state.privacy_data
+        c_a, c_b = st.columns(2)
+        with c_a:
+            css = "danger-card" if p_data.get('family_data') != "Safe" else "safe-card"
+            st.markdown(f"<div class='{css}'><b>FAMILY DATA</b><br>{p_data.get('family_data')}</div>", unsafe_allow_html=True)
+        with c_b:
+            css = "danger-card" if p_data.get('selling_clause') == "Yes" else "safe-card"
+            st.markdown(f"<div class='{css}'><b>DATA SELLING</b><br>{p_data.get('selling_clause')}</div>", unsafe_allow_html=True)
+        st.info(p_data.get('explanation'))
+
+    with t3: # Time Machine
+        st.markdown("### 🔮 10-YEAR INFLATION FORECAST")
+        f_data = st.session_state.future_data
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=f_data['years'], y=f_data['cost'], mode='lines+markers', name='Premium Cost', line=dict(color='#ef4444', width=3)))
+        fig.add_trace(go.Scatter(x=f_data['years'], y=f_data['value'], mode='lines+markers', name='Coverage Value', line=dict(color='#3b82f6', dash='dot')))
+        fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=350)
+        st.plotly_chart(fig, use_container_width=True)
+
+    with t4: # Courtroom
+        st.markdown("### ⚔️ ADVERSARIAL SIMULATION")
+        c_chat, c_stat = st.columns([0.7, 0.3])
+        with c_stat:
+            st.markdown("<div class='apex-card'><b>STATUS:</b> ACTIVE<br><b>OPPONENT:</b> AI LAWYER</div>", unsafe_allow_html=True)
+            if st.button("🏳️ CONCEDE"): st.session_state.court_history = []; st.rerun()
+        
+        with c_chat:
+            if not st.session_state.court_history:
+                st.session_state.court_history.append({"role": "assistant", "content": "I deny your claim based on Clause 4.1. Prove me wrong."})
             
-            # TRYING 2.5 PRO FOR CHAT TOO
-            try:
-                model = genai.GenerativeModel('models/gemini-2.5-pro')
-            except:
-                model = genai.GenerativeModel('models/gemini-1.5-flash') # Backup
+            for msg in st.session_state.court_history:
+                role = "⚖️ LAWYER" if msg['role'] == 'assistant' else "👤 YOU"
+                color = "#2e1065" if msg['role'] == 'assistant' else "#064e3b"
+                st.markdown(f"<div style='background:{color}; padding:12px; border-radius:8px; margin-bottom:8px; font-size:14px;'><b>{role}:</b> {msg['content']}</div>", unsafe_allow_html=True)
             
-            # Smart Search Trigger
-            scam_context = ""
-            if "scam" in prompt.lower() or "review" in prompt.lower() or "fraud" in prompt.lower():
-                status_box = st.status("🕵️ Sentinel searching dark web...", expanded=False)
-                scam_context = search_web(prompt)
-                status_box.update(label="Search Complete", state="complete")
-            
-            # Reply
-            full_prompt = f"""
-            CHAT HISTORY: {st.session_state.messages[-3:]}
-            USER PROFILE: {st.session_state.user_profile}
-            SEARCH INTEL: {scam_context}
-            USER QUERY: {prompt}
-            
-            Answer directly.
-            """
-            try:
-                response = model.generate_content(full_prompt).text
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            except Exception as e:
-                st.error(f"Error: {e}")
+            if u_in := st.chat_input("Object..."):
+                st.session_state.court_history.append({"role": "user", "content": u_in})
+                with st.spinner("Lawyer countering..."):
+                    r = court_battle_logic(st.session_state.full_text, u_in, st.session_state.court_history)
+                    st.session_state.court_history.append({"role": "assistant", "content": r})
+                st.rerun()
+
+    with t5: # Sentinel
+        st.markdown(f"### 🌐 DARK WEB SCAN: {st.session_state.comp_name}")
+        st.markdown(f"<div class='apex-card'>{st.session_state.sentinel_data}</div>", unsafe_allow_html=True)
     
