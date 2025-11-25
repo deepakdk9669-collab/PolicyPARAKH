@@ -10,7 +10,6 @@ import uuid
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="PolicyPARAKH AI", layout="wide", initial_sidebar_state="expanded")
 
-# Styling
 st.markdown("""
 <style>
     .stApp { background-color: #0E1117; color: #E0E0E0; font-family: 'Inter', sans-serif; }
@@ -63,7 +62,7 @@ with st.sidebar:
             else:
                 st.toast("Please upload a policy first!")
     
-    # History List
+    # History
     st.markdown("### History")
     for sess_id, sess_data in list(st.session_state.sessions.items())[::-1]:
         if st.button(f"💬 {sess_data['title']}", key=sess_id, use_container_width=True):
@@ -74,41 +73,43 @@ with st.sidebar:
 client = utils.initialize_gemini()
 st.markdown(f"### PolicyPARAKH <span class='gem-badge'>2.5 Pro</span>", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📎 Add Policy (PDF/Image)", type=["pdf", "png", "jpg"], label_visibility="collapsed")
+uploaded_file = st.file_uploader("📎 Add Policy (PDF/Image)", type=["pdf", "png", "jpg", "jpeg"], label_visibility="collapsed")
 
 if uploaded_file:
     if 'current_file_name' not in st.session_state or st.session_state.current_file_name != uploaded_file.name:
-        with st.spinner("Processing..."):
-            # Prepare Data
-            if uploaded_file.type == "application/pdf":
+        with st.spinner("Processing File..."):
+            import base64
+            
+            # Determine Mime Type Correctly
+            file_type = uploaded_file.type
+            if file_type == "application/pdf":
+                mime = "application/pdf"
+            elif file_type in ["image/png", "image/jpeg", "image/jpg"]:
+                mime = file_type # Use the actual image mime type
+            else:
+                mime = "application/pdf" # Default fallback
+            
+            # Encode Data
+            if mime == "application/pdf":
                 data = utils.base64_encode_pdf(uploaded_file)
             else:
-                import base64
                 data = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
             
             st.session_state.file_data = data
+            st.session_state.file_mime = mime # Store this for the agent!
             st.session_state.current_file_name = uploaded_file.name
             
-            # CRASH PROOF LOGIC: Check if report is valid
-            report = auditor.generate_risk_assessment(client, "Scan this.", data)
+            # --- RUN AUDITOR ---
+            # Now passing 'mime' correctly so it handles Images AND PDFs
+            report = auditor.generate_risk_assessment(client, "Audit this insurance policy.", data, mime)
             
             if report:
                 st.session_state.auditor_report = report
-                # Use .get() to prevent AttributeError
                 score = report.get('risk_score_0_to_100', 'N/A')
                 summary = report.get('auditor_summary', 'No summary generated.')
                 add_message("assistant", f"📄 **Policy Scanned!**\n\n**Risk Score:** {score}/100\n\n{summary}")
-                
-                # Family Check with 2.5 Pro
-                if st.session_state.family_profile:
-                    fam_check = client.models.generate_content(
-                        model='gemini-2.5-pro',
-                        contents=f"Policy Risks: {summary}. Family Profile: {st.session_state.family_profile}. Cross-reference and warn me."
-                    )
-                    add_message("assistant", f"⚠️ **Family Alert:** {fam_check.text}")
             else:
-                # If report is None, show error instead of crashing
-                add_message("assistant", "⚠️ **Scan Failed:** Server is busy or document is unreadable. Please try again.")
+                add_message("assistant", "⚠️ **Scan Failed:** Document unreadable.")
 
 # Chat Display
 for msg in get_current_messages():
@@ -122,6 +123,15 @@ if prompt := st.chat_input("Ask about your policy..."):
     with st.chat_message("assistant"):
         response = "Connecting..."
         
+        # --- CONTEXT INJECTION ---
+        # We attach the report summary to every message so the bot knows what "this" is.
+        policy_context = ""
+        if 'auditor_report' in st.session_state:
+            policy_context = f"""
+            [CONTEXT: The user is asking about an uploaded Insurance Policy.
+            Summary of Policy: {st.session_state.auditor_report}]
+            """
+        
         if "court" in prompt.lower():
             if 'auditor_report' in st.session_state:
                 response = courtroom.run_courtroom_simulation(client, st.session_state.auditor_report, prompt)
@@ -130,7 +140,7 @@ if prompt := st.chat_input("Ask about your policy..."):
         
         elif any(x in prompt.lower() for x in ["scam", "news"]):
             response = sentinel.sentinel_agent_check(client, st.session_state.get('auditor_report', {}), prompt)
-            
+        
         elif "value" in prompt.lower():
              df = architect.architect_agent_forecast(client, {})
              st.session_state.architect_data = df
@@ -138,13 +148,15 @@ if prompt := st.chat_input("Ask about your policy..."):
              st.line_chart(df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']], color=["#007BFF", "#DC3545"])
 
         else:
-            # Default Chat with 2.5 Pro
+            # General Chat with CONTEXT
             try:
-                context = f"Report: {st.session_state.get('auditor_report')}. User: {prompt}"
-                res = client.models.generate_content(model='gemini-2.5-pro', contents=context)
+                # Combine User Prompt + Context
+                full_prompt = f"{policy_context}\n\nUser Question: {prompt}"
+                
+                res = client.models.generate_content(model='gemini-2.5-pro', contents=full_prompt)
                 response = res.text
             except:
-                res = client.models.generate_content(model='gemini-2.5-flash', contents=context)
+                res = client.models.generate_content(model='gemini-2.5-flash', contents=full_prompt)
                 response = res.text
 
         st.markdown(response)
