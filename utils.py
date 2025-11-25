@@ -4,25 +4,28 @@ from google import genai
 import base64
 import io
 
-# Placeholder for Gemini API Key
-# In Streamlit Cloud, set this in "Secrets"
-API_KEY = os.environ.get("GEMINI_API_KEY", "")
-
 @st.cache_resource
 def initialize_gemini():
-    """Initializes and returns the Gemini client."""
-    if not API_KEY:
-        st.error("🚨 Gemini API Key not found. Please set the GEMINI_API_KEY environment variable.")
+    """Gemini 3 Pro के लिए क्लाइंट इनिशियलाइज़ करता है।"""
+    
+    # 1. Streamlit Secrets से की (Key) उठाओ
+    if "GEMINI_API_KEY" in st.secrets:
+        api_key = st.secrets["GEMINI_API_KEY"]
+    # 2. नहीं तो Environment Variable से
+    else:
+        api_key = os.environ.get("GEMINI_API_KEY", "")
+
+    if not api_key:
+        st.error("🚨 API Key नहीं मिली! Settings में जाकर GEMINI_API_KEY डालें।")
         return None
     
     try:
-        # Using Gemini 2.5 Flash for speed
-        client = genai.Client(api_key=API_KEY)
+        # लेटेस्ट google-genai SDK
+        client = genai.Client(api_key=api_key)
         return client
     except Exception as e:
-        st.error(f"Error initializing Gemini client: {e}")
+        st.error(f"Gemini Connection Error: {e}")
         return None
 
 def base64_encode_pdf(uploaded_file: io.BytesIO) -> str:
-    """Reads the PDF file bytes and returns a base64 encoded string."""
     return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
