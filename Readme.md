@@ -132,7 +132,7 @@ graph TD
     classDef critic fill:#450a0a,stroke:#EF4444,color:#fff
     classDef tool fill:#fff,stroke:#333,color:#000
 
-    User(👤 User / Hacker) --> |"Upload PDF + Prompt"| Chat[🤖 Central Chatbot Interface]:::bot
+    User(👤 User ) --> |"Upload PDF + Prompt"| Chat[🤖 Central Chatbot Interface]:::bot
     Chat --> |"Dispatch Task"| Brain{🧠 Coordinator}:::bot
 
     subgraph "The Neural Swarm"
