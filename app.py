@@ -62,7 +62,6 @@ with st.sidebar:
             else:
                 st.toast("Please upload a policy first!")
     
-    # History
     st.markdown("### History")
     for sess_id, sess_data in list(st.session_state.sessions.items())[::-1]:
         if st.button(f"💬 {sess_data['title']}", key=sess_id, use_container_width=True):
@@ -77,39 +76,41 @@ uploaded_file = st.file_uploader("📎 Add Policy (PDF/Image)", type=["pdf", "pn
 
 if uploaded_file:
     if 'current_file_name' not in st.session_state or st.session_state.current_file_name != uploaded_file.name:
-        with st.spinner("Processing File..."):
+        with st.spinner("Processing..."):
             import base64
-            
-            # Determine Mime Type Correctly
+            # Determine Mime Type
             file_type = uploaded_file.type
-            if file_type == "application/pdf":
-                mime = "application/pdf"
-            elif file_type in ["image/png", "image/jpeg", "image/jpg"]:
-                mime = file_type # Use the actual image mime type
-            else:
-                mime = "application/pdf" # Default fallback
+            if file_type == "application/pdf": mime = "application/pdf"
+            elif file_type in ["image/png", "image/jpeg", "image/jpg"]: mime = file_type
+            else: mime = "application/pdf"
             
-            # Encode Data
-            if mime == "application/pdf":
-                data = utils.base64_encode_pdf(uploaded_file)
-            else:
-                data = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+            # Encode
+            if mime == "application/pdf": data = utils.base64_encode_pdf(uploaded_file)
+            else: data = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
             
             st.session_state.file_data = data
-            st.session_state.file_mime = mime # Store this for the agent!
+            st.session_state.file_mime = mime
             st.session_state.current_file_name = uploaded_file.name
             
-            # --- RUN AUDITOR ---
-            # Now passing 'mime' correctly so it handles Images AND PDFs
-            report = auditor.generate_risk_assessment(client, "Audit this insurance policy.", data, mime)
+            # Run Auditor
+            report = auditor.generate_risk_assessment(client, "Scan this.", data, mime)
             
+            # FIX: Check if report exists to prevent Crash
             if report:
                 st.session_state.auditor_report = report
                 score = report.get('risk_score_0_to_100', 'N/A')
                 summary = report.get('auditor_summary', 'No summary generated.')
                 add_message("assistant", f"📄 **Policy Scanned!**\n\n**Risk Score:** {score}/100\n\n{summary}")
+                
+                # Family Check
+                if st.session_state.family_profile:
+                    fam_check = client.models.generate_content(
+                        model='gemini-2.5-pro',
+                        contents=f"Policy Risks: {summary}. Family: {st.session_state.family_profile}. Warn me."
+                    )
+                    add_message("assistant", f"⚠️ **Family Alert:** {fam_check.text}")
             else:
-                add_message("assistant", "⚠️ **Scan Failed:** Document unreadable.")
+                add_message("assistant", "⚠️ **Scan Failed:** Document unreadable or server busy.")
 
 # Chat Display
 for msg in get_current_messages():
@@ -123,24 +124,20 @@ if prompt := st.chat_input("Ask about your policy..."):
     with st.chat_message("assistant"):
         response = "Connecting..."
         
-        # --- CONTEXT INJECTION ---
-        # We attach the report summary to every message so the bot knows what "this" is.
+        # Context Injection
         policy_context = ""
         if 'auditor_report' in st.session_state:
-            policy_context = f"""
-            [CONTEXT: The user is asking about an uploaded Insurance Policy.
-            Summary of Policy: {st.session_state.auditor_report}]
-            """
-        
+            policy_context = f"[Context: Policy Summary: {st.session_state.auditor_report}]"
+
         if "court" in prompt.lower():
             if 'auditor_report' in st.session_state:
                 response = courtroom.run_courtroom_simulation(client, st.session_state.auditor_report, prompt)
             else:
-                response = "Upload a policy first for the courtroom."
+                response = "Upload a policy first."
         
         elif any(x in prompt.lower() for x in ["scam", "news"]):
             response = sentinel.sentinel_agent_check(client, st.session_state.get('auditor_report', {}), prompt)
-        
+            
         elif "value" in prompt.lower():
              df = architect.architect_agent_forecast(client, {})
              st.session_state.architect_data = df
@@ -148,11 +145,8 @@ if prompt := st.chat_input("Ask about your policy..."):
              st.line_chart(df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']], color=["#007BFF", "#DC3545"])
 
         else:
-            # General Chat with CONTEXT
             try:
-                # Combine User Prompt + Context
-                full_prompt = f"{policy_context}\n\nUser Question: {prompt}"
-                
+                full_prompt = f"{policy_context}\nUser: {prompt}"
                 res = client.models.generate_content(model='gemini-2.5-pro', contents=full_prompt)
                 response = res.text
             except:
