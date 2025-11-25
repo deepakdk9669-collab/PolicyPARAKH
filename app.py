@@ -1,317 +1,124 @@
 import streamlit as st
-import os
-import io
-import time
-from typing import List, Dict, Any, Optional
+import utils
+import auditor
+import sentinel
+import architect
 
-# IMPORTANT: You must install the necessary libraries first:
-# pip install streamlit google-genai pypdf
+# Page Config
+st.set_page_config(page_title="PolicyPARAKH", layout="wide")
 
-# --------------------------------------------------------------------------------------
-# 1. FIREBASE & AUTH PLACEHOLDERS (REQUIRED FOR PRODUCTION)
-# In a real collaborative app like PolicyPARAKH, this section would handle user state
-# and secure data storage using Firebase/Firestore, but for a single-file demo,
-# we use session state.
-# --------------------------------------------------------------------------------------
-
-# Placeholder for Gemini API Key (Required for the model calls)
-# In a real Streamlit app, this should be set in .streamlit/secrets.toml
-# For this code to run, you must set the GEMINI_API_KEY environment variable.
-API_KEY = os.environ.get("GEMINI_API_KEY", "")
-
-# --------------------------------------------------------------------------------------
-# 2. CORE UTILITY FUNCTIONS
-# --------------------------------------------------------------------------------------
-
-@st.cache_resource
-def initialize_gemini():
-    """Initializes and returns the Gemini client."""
-    from google import genai
-    
-    if not API_KEY:
-        st.error("🚨 Gemini API Key not found. Please set the GEMINI_API_KEY environment variable or a secret.")
-        return None
-    
-    try:
-        # We use Gemini 2.5 Flash for speed (as specified in Readme.md)
-        client = genai.Client(api_key=API_KEY)
-        return client
-    except Exception as e:
-        st.error(f"Error initializing Gemini client: {e}")
-        return None
-
-def base64_encode_pdf(uploaded_file: io.BytesIO) -> str:
-    """Reads the PDF file bytes and returns a base64 encoded string."""
-    import base64
-    return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
-
-def generate_risk_assessment(client, prompt: str, pdf_data: str) -> Optional[Dict[str, Any]]:
-    """
-    Simulates the Auditor Agent's task:
-    1. Ingests the PDF (via Base64 in the content part).
-    2. Scans for key details (Room Rent Capping, Co-Pay).
-    3. Outputs a quantitative Risk Score (using Structured Output).
-    """
-    if not client:
-        return None
-
-    # This is the expected structured output from the model (The Auditor's Report)
-    risk_schema = {
-        "type": "OBJECT",
-        "properties": {
-            "risk_score_0_to_100": {"type": "INTEGER", "description": "The policy's risk score from 0 (Safest) to 100 (Highest Risk)."},
-            "co_pay_clause": {"type": "STRING", "description": "Summary of the co-pay percentage or clause found in the document."},
-            "room_rent_limit": {"type": "STRING", "description": "The maximum daily room rent allowed by the policy."},
-            "auditor_summary": {"type": "STRING", "description": "A concise, critical summary of the major risks and exclusions found."},
-        },
-        "required": ["risk_score_0_to_100", "co_pay_clause", "room_rent_limit", "auditor_summary"]
-    }
-
-    # System Instruction to guide the Auditor Agent's persona and task
-    system_prompt = (
-        "You are the PolicyPARAKH Auditor Agent. Your task is to ruthlessly scan the provided "
-        "insurance policy document for hidden risks, especially co-pay and room rent limits. "
-        "Provide a score from 0 (Low Risk) to 100 (High Risk). Respond only with the requested JSON structure."
-    )
-
-    contents = [
-        # Pass the PDF as inline data for multimodal processing
-        {
-            "inlineData": {
-                "mimeType": "application/pdf",
-                "data": pdf_data
-            }
-        },
-        # Pass the user's prompt as text
-        {"text": prompt}
-    ]
-
-    try:
-        with st.spinner("🧠 Auditor Agent Scanning Policy..."):
-            response = client.models.generate_content(
-                model='gemini-2.5-flash', # Using Flash for fast multimodal analysis
-                contents=contents,
-                config={
-                    "system_instruction": system_prompt,
-                    "response_mime_type": "application/json",
-                    "response_schema": risk_schema,
-                    "temperature": 0.0, # Prefer deterministic, factual output
-                }
-            )
-        
-        # The response text is a JSON string conforming to the schema
-        import json
-        return json.loads(response.text)
-
-    except Exception as e:
-        st.error(f"Auditor Agent failed to process document: {e}")
-        return None
-
-# --------------------------------------------------------------------------------------
-# 3. STREAMLIT UI & CENTRAL CHATBOT LOGIC
-# --------------------------------------------------------------------------------------
-
-st.set_page_config(
-    page_title="PolicyPARAKH: Neural Legal Defense System",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Custom styling for a modern, mobile-friendly look
+# Custom CSS
 st.markdown("""
 <style>
-.stApp {
-    font-family: 'Inter', sans-serif;
-}
-h1 {
-    color: #007BFF; /* Primary blue for title */
-    text-align: center;
-}
-.stSidebar {
-    background-color: #f0f2f6; /* Light gray sidebar */
-    padding-top: 2rem;
-}
-.stAlert {
-    border-radius: 0.5rem;
-}
-.reportview-container .main {
-    padding-top: 0;
-}
-.stButton>button {
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    font-weight: bold;
-    background-color: #28a745; /* Success green */
-    color: white;
-}
-/* Style for the risk score meter (simulate a dashboard gauge) */
-.risk-meter {
-    border: 3px solid #007BFF;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    text-align: center;
-    background-color: #e9ecef;
-}
-.risk-score {
-    font-size: 4rem;
-    font-weight: 900;
-}
-.chat-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
+.stApp { font-family: 'Inter', sans-serif; }
+h1 { color: #007BFF; text-align: center; }
+.risk-meter { border: 3px solid #007BFF; border-radius: 0.75rem; padding: 1.5rem; text-align: center; background-color: #e9ecef; }
+.risk-score { font-size: 4rem; font-weight: 900; }
 </style>
 """, unsafe_allow_html=True)
 
-
 def main():
-    """The main application function (The Central Chatbot Interface)."""
     st.title("PolicyPARAKH: Neural Legal Defense System")
-    st.markdown("##### The AI that reads the fine print, fights the lawyer, and predicts the future.")
+    st.markdown("##### The AI that reads the fine print and fights for you.")
+    
+    # 1. Initialize
+    client = utils.initialize_gemini()
+    if not client: return
 
-    # Initialize Gemini Client
-    client = initialize_gemini()
-    if not client:
-        return
-
-    # ------------------ Sidebar: Input & Controls ------------------
-    st.sidebar.header("Input Policy Document")
-
-    # Policy Ingestion
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload Insurance Policy (PDF only)",
-        type="pdf",
-        key="policy_pdf"
-    )
+    # 2. Sidebar Input
+    st.sidebar.header("Input Policy")
+    uploaded_file = st.sidebar.file_uploader("Upload Policy (PDF)", type="pdf")
 
     if uploaded_file and 'pdf_base64' not in st.session_state:
-        # Cache the base64 data to avoid re-reading the file on every interaction
-        st.session_state.pdf_base64 = base64_encode_pdf(uploaded_file)
-        st.sidebar.success(f"✅ Policy '{uploaded_file.name}' ingested successfully.")
-        
-        # Clear the report when a new file is uploaded
-        if 'auditor_report' in st.session_state:
-             del st.session_state.auditor_report
-             
-    elif not uploaded_file:
-        if 'pdf_base64' in st.session_state:
-            del st.session_state.pdf_base64
+        st.session_state.pdf_base64 = utils.base64_encode_pdf(uploaded_file)
+        st.sidebar.success("✅ Policy ingested.")
+        if 'auditor_report' in st.session_state: del st.session_state.auditor_report
+        if 'architect_data' in st.session_state: del st.session_state.architect_data
 
-    # The Core Action: Initial Auditor Scan
-    if st.sidebar.button("Run Initial Auditor Scan") and uploaded_file and client:
-        if 'pdf_base64' in st.session_state:
-            # The prompt guides the Auditor Agent to perform the standard, defined task
-            initial_prompt = (
-                "Analyze the uploaded PDF policy for Room Rent Capping, Co-Pay, and major exclusions. "
-                "Provide a quantitative risk score and a critical summary."
-            )
-            
-            report = generate_risk_assessment(client, initial_prompt, st.session_state.pdf_base64)
-            if report:
-                st.session_state.auditor_report = report
-            else:
-                 st.session_state.auditor_report = None # Ensure state is clear if analysis fails
+    # 3. Agent Controls
+    if st.sidebar.button("Run Auditor Scan (Core Brain)") and uploaded_file:
+        prompt = "Analyze for Room Rent, Co-Pay, and Exclusions."
+        report = auditor.generate_risk_assessment(client, prompt, st.session_state.pdf_base64)
+        if report:
+            st.session_state.auditor_report = report
 
-    # ------------------ Main Area: Dashboard & Chat ------------------
+    if 'auditor_report' in st.session_state:
+        if st.sidebar.button("Run Architect Forecast (Financials)"):
+            st.session_state.architect_data = architect.architect_agent_forecast(client, st.session_state.auditor_report)
+
+    # 4. Dashboard Display
+    st.markdown("---")
     
-    st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
-    
+    # Auditor Section
     if 'auditor_report' in st.session_state and st.session_state.auditor_report:
         report = st.session_state.auditor_report
+        st.header("Auditor Risk Assessment")
         
-        st.header("Auditor Agent Risk Assessment")
-
-        # 1. Risk Score Display
         col1, col2 = st.columns([1, 2])
-        
         with col1:
-            # Map score to color for better visual communication (Red=High Risk)
-            score_val = report['risk_score_0_to_100']
-            color = 'red' if score_val > 70 else ('orange' if score_val > 40 else 'green')
-            
-            st.markdown(f"""
-            <div class='risk-meter' style='border-color: {color};'>
-                <p>Policy Risk Score</p>
-                <p class='risk-score' style='color: {color};'>{score_val}</p>
-                <p style='font-size: 0.9rem;'>0 (Low Risk) / 100 (High Risk)</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # 2. Key Findings Summary
+            score = report['risk_score_0_to_100']
+            color = 'red' if score > 70 else ('orange' if score > 40 else 'green')
+            st.markdown(f"<div class='risk-meter' style='border-color:{color};'><p>Risk Score</p><p class='risk-score' style='color:{color}'>{score}</p></div>", unsafe_allow_html=True)
         with col2:
-            st.subheader("Key Exclusion Findings (The Fine Print)")
-            st.markdown(f"**Co-Pay Clause:** {report['co_pay_clause']}")
-            st.markdown(f"**Room Rent Limit:** {report['room_rent_limit']}")
-            st.markdown("---")
-            st.markdown(f"**Auditor's Critical Summary:** \n\n{report['auditor_summary']}")
-            
+            st.markdown(f"**Insurer:** {report.get('insurance_company_name', 'Unknown')}")
+            st.markdown(f"**Co-Pay:** {report['co_pay_clause']}")
+            st.markdown(f"**Room Rent:** {report['room_rent_limit']}")
+            st.info(f"**Summary:** {report['auditor_summary']}")
         st.markdown("---")
 
-    # ------------------ The Unified Chatbot Interface ------------------
-
-    st.subheader("Unified Chatbot Interface (Ask a Question)")
-
-    # Initialize chat history (The Central Command's memory)
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-            
-    # The Chat Input box
-    if prompt := st.chat_input("Ask about your policy, exclusions, or financial impact..."):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # Architect Section
+    if 'architect_data' in st.session_state:
+        df = st.session_state.architect_data
+        rate_used = df.attrs.get('inflation_rate_used', 10)
         
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        st.subheader("Architect Agent: Future Value Forecast")
+        st.warning(f"📉 **Real-Time Data Used:** Calculated using the current **{rate_used}% Medical Inflation Rate** found online.")
+        st.markdown("This chart shows how the *real* value of your 5 Lakhs coverage drops over 10 years.")
+        
+        st.line_chart(
+            df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']],
+            color=["#007BFF", "#DC3545"]
+        )
+        st.markdown("---")
 
-        # Generate response (The Central Chatbot delegates the question)
+    # 5. Chat Interface
+    st.subheader("Unified Chatbot (Ask about Scams, Value, or Law)")
+    if "messages" not in st.session_state: st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+
+    if prompt := st.chat_input("Ask about your policy..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+
         with st.chat_message("assistant"):
             if 'pdf_base64' not in st.session_state:
-                st.warning("Please upload a PDF policy document first to run the analysis.")
-                st.session_state.messages.append({"role": "assistant", "content": "Please upload a PDF policy document first to run the analysis."})
-                return
-
-            message_placeholder = st.empty()
-            full_response = ""
-            
-            # The Central Chatbot prepares the context for the agent
-            context = f"""
-            The user is asking a follow-up question about their insurance policy. 
-            The policy details are provided as a PDF. 
-            The initial Auditor Agent report summarized the policy as: {st.session_state.auditor_report if 'auditor_report' in st.session_state and st.session_state.auditor_report else 'No initial report available.'}
-            User Question: {prompt}
-            
-            Act as the Central Chatbot interface, synthesizing the policy document and the initial findings. 
-            If the question requires financial forecasting or outside search (like crime rates), acknowledge this is a task for the 
-            Architect Agent or Sentinel Agent, but provide the best answer you can using only the policy text and the initial report.
-            """
-
-            # I, the developer, will use Gemini to simulate the agent coordination.
-            try:
-                # Use a standard text generation call for the follow-up chat
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=context,
-                    config={
-                         "temperature": 0.3,
-                    }
-                )
-                full_response = response.text
-                message_placeholder.markdown(full_response)
+                st.write("Please upload a PDF first.")
+            else:
+                # Orchestrator Logic: Direct the traffic
+                prompt_lower = prompt.lower()
                 
-            except Exception as e:
-                full_response = f"Agent Coordination Failed: Error processing request. ({e})"
-                message_placeholder.markdown(full_response)
-
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+                # Trigger Sentinel for "Scams/News/Reviews"
+                if any(k in prompt_lower for k in ["scam", "fraud", "review", "complaint", "settlement", "ratio"]):
+                    response = sentinel.sentinel_agent_check(client, st.session_state.auditor_report, prompt)
+                
+                # Trigger Architect for "Value/Inflation/Future"
+                elif any(k in prompt_lower for k in ["value", "worth", "inflation", "future"]):
+                    # If data exists, explain it; if not, suggest running the tool
+                    if 'architect_data' in st.session_state:
+                         response = "I have already analyzed the inflation data in the chart above. The real purchasing power drops significantly due to medical inflation."
+                    else:
+                        response = "That looks like a financial forecasting question. Please click the 'Run Architect Forecast' button in the sidebar to fetch live inflation data."
+                
+                # Default: Standard RAG Chat
+                else:
+                    context = f"Policy Summary: {st.session_state.get('auditor_report')}. User: {prompt}"
+                    res = client.models.generate_content(model='gemini-2.5-flash', contents=context)
+                    response = res.text
+                
+                st.write(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
 
 if __name__ == "__main__":
     main()
