@@ -5,7 +5,7 @@ import sentinel
 import architect
 
 # Page Config
-st.set_page_config(page_title="PolicyPARAKH", layout="wide")
+st.set_page_config(page_title="PolicyPARAKH Pro", layout="wide")
 
 # Custom CSS
 st.markdown("""
@@ -14,11 +14,13 @@ st.markdown("""
 h1 { color: #007BFF; text-align: center; }
 .risk-meter { border: 3px solid #007BFF; border-radius: 0.75rem; padding: 1.5rem; text-align: center; background-color: #e9ecef; }
 .risk-score { font-size: 4rem; font-weight: 900; }
+.tech-badge { background-color: #e3f2fd; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; color: #0d47a1; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
     st.title("PolicyPARAKH: Neural Legal Defense System")
+    st.markdown("<center><span class='tech-badge'>Powered by Gemini 3 Pro Preview & Gemini 2.5 Flash</span></center>", unsafe_allow_html=True)
     st.markdown("##### The AI that reads the fine print and fights for you.")
     
     # 1. Initialize
@@ -36,14 +38,14 @@ def main():
         if 'architect_data' in st.session_state: del st.session_state.architect_data
 
     # 3. Agent Controls
-    if st.sidebar.button("Run Auditor Scan (Core Brain)") and uploaded_file:
+    if st.sidebar.button("Run Auditor Scan (Gemini 3 Pro)") and uploaded_file:
         prompt = "Analyze for Room Rent, Co-Pay, and Exclusions."
         report = auditor.generate_risk_assessment(client, prompt, st.session_state.pdf_base64)
         if report:
             st.session_state.auditor_report = report
 
     if 'auditor_report' in st.session_state:
-        if st.sidebar.button("Run Architect Forecast (Financials)"):
+        if st.sidebar.button("Run Architect Forecast (Live Data)"):
             st.session_state.architect_data = architect.architect_agent_forecast(client, st.session_state.auditor_report)
 
     # 4. Dashboard Display
@@ -73,7 +75,6 @@ def main():
         
         st.subheader("Architect Agent: Future Value Forecast")
         st.warning(f"📉 **Real-Time Data Used:** Calculated using the current **{rate_used}% Medical Inflation Rate** found online.")
-        st.markdown("This chart shows how the *real* value of your 5 Lakhs coverage drops over 10 years.")
         
         st.line_chart(
             df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']],
@@ -96,25 +97,24 @@ def main():
             if 'pdf_base64' not in st.session_state:
                 st.write("Please upload a PDF first.")
             else:
-                # Orchestrator Logic: Direct the traffic
                 prompt_lower = prompt.lower()
                 
-                # Trigger Sentinel for "Scams/News/Reviews"
+                # Sentinel (Gemini 2.5) for Search
                 if any(k in prompt_lower for k in ["scam", "fraud", "review", "complaint", "settlement", "ratio"]):
                     response = sentinel.sentinel_agent_check(client, st.session_state.auditor_report, prompt)
                 
-                # Trigger Architect for "Value/Inflation/Future"
+                # Architect for Finance
                 elif any(k in prompt_lower for k in ["value", "worth", "inflation", "future"]):
-                    # If data exists, explain it; if not, suggest running the tool
                     if 'architect_data' in st.session_state:
-                         response = "I have already analyzed the inflation data in the chart above. The real purchasing power drops significantly due to medical inflation."
+                         response = "See the inflation chart above."
                     else:
-                        response = "That looks like a financial forecasting question. Please click the 'Run Architect Forecast' button in the sidebar to fetch live inflation data."
+                        response = "Click 'Run Architect Forecast' to see financial data."
                 
-                # Default: Standard RAG Chat
+                # Chat fallback (Gemini 3 Pro) for reasoning
                 else:
+                    # Using Gemini 3 Pro for normal chat reasoning too
                     context = f"Policy Summary: {st.session_state.get('auditor_report')}. User: {prompt}"
-                    res = client.models.generate_content(model='gemini-2.5-flash', contents=context)
+                    res = client.models.generate_content(model='gemini-3-pro-preview', contents=context)
                     response = res.text
                 
                 st.write(response)
