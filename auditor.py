@@ -6,20 +6,17 @@ from typing import Optional, Dict, Any
 def generate_risk_assessment(client, prompt: str, file_data: str, mime_type: str = "application/pdf") -> Optional[Dict[str, Any]]:
     if not client: return None
 
-    # Force the AI to be an Insurance Auditor, NOT a System Admin
+    # Strict System Instruction to prevent "System Audit" hallucinations
     system_instruction = """
     You are an expert Insurance Policy Auditor. 
-    Your ONLY job is to analyze insurance documents (PDFs/Images).
-    
-    DO NOT generate 'System Logs', 'Network Activity', or 'Security Protocols'. 
-    That is wrong.
-    
-    Instead, extract:
+    Analyze the provided document (PDF or Image).
+    Extract:
     1. Insurance Company Name
-    2. Co-Pay Clauses (Look for percentages user has to pay)
-    3. Room Rent Limits (Look for capping on rooms)
-    4. Waiting Periods
-    5. A Risk Score (0-100) based on how bad the policy is for the user.
+    2. Co-Pay Clauses
+    3. Room Rent Limits
+    4. Risk Score (0-100)
+    5. A short summary of the bad clauses.
+    Output JSON.
     """
 
     risk_schema = {
@@ -35,8 +32,9 @@ def generate_risk_assessment(client, prompt: str, file_data: str, mime_type: str
     }
 
     try:
-        # 1. Try with Gemini 2.5 Pro (Best for reasoning)
-        with st.spinner("🧠 Reading Policy Document..."):
+        # FORCE USE of Gemini 2.5 Pro (Stable)
+        # We removed the 3 Pro logic completely to avoid 429 Errors
+        with st.spinner("🧠 Auditor (2.5 Pro) Analyzing..."):
             response = client.models.generate_content(
                 model='gemini-2.5-pro',
                 contents=[
@@ -44,7 +42,7 @@ def generate_risk_assessment(client, prompt: str, file_data: str, mime_type: str
                         role="user",
                         parts=[
                             types.Part.from_bytes(data=file_data, mime_type=mime_type),
-                            types.Part.from_text(text=prompt + " Analyze this specific insurance policy image/pdf.")
+                            types.Part.from_text(text=prompt)
                         ]
                     )
                 ],
@@ -58,8 +56,8 @@ def generate_risk_assessment(client, prompt: str, file_data: str, mime_type: str
             return json.loads(response.text)
 
     except Exception as e:
-        st.warning(f"⚠️ Pro Model busy, switching to Flash... ({e})")
-        # 2. Fallback to Flash
+        # Fallback to Flash only if Pro fails
+        st.warning(f"⚠️ Pro Model Error: {e}. Switching to Flash.")
         try:
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
@@ -81,5 +79,5 @@ def generate_risk_assessment(client, prompt: str, file_data: str, mime_type: str
             )
             return json.loads(response.text)
         except Exception as e2:
-            st.error(f"❌ Error: {e2}")
+            st.error(f"❌ Scan Failed: {e2}")
             return None
