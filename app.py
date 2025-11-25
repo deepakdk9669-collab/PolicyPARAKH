@@ -3,122 +3,191 @@ import utils
 import auditor
 import sentinel
 import architect
+import courtroom
+import market_scout
+import uuid
 
-# Page Config
-st.set_page_config(page_title="PolicyPARAKH Pro", layout="wide")
+# --- PAGE CONFIG & STYLING ---
+st.set_page_config(page_title="PolicyPARAKH AI", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS
+# Dark Mode & Mobile UI CSS mimicking the screenshot
 st.markdown("""
 <style>
-.stApp { font-family: 'Inter', sans-serif; }
-h1 { color: #007BFF; text-align: center; }
-.risk-meter { border: 3px solid #007BFF; border-radius: 0.75rem; padding: 1.5rem; text-align: center; background-color: #e9ecef; }
-.risk-score { font-size: 4rem; font-weight: 900; }
-.tech-badge { background-color: #e3f2fd; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; color: #0d47a1; font-weight: bold; }
+    /* Global Font & Dark Theme adjustments */
+    .stApp { background-color: #0E1117; color: #E0E0E0; font-family: 'Inter', sans-serif; }
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] { background-color: #161B22; border-right: 1px solid #30363D; }
+    .sidebar-btn { width: 100%; text-align: left; padding: 10px; border-radius: 8px; background: transparent; color: #C9D1D9; border: none; margin-bottom: 5px; }
+    .sidebar-btn:hover { background-color: #21262D; cursor: pointer; }
+    .sidebar-header { color: #8B949E; font-size: 0.8rem; font-weight: 600; margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; }
+    
+    /* Main Chat Area */
+    .chat-container { max-width: 900px; margin: 0 auto; padding-bottom: 100px; }
+    
+    /* Custom Badge */
+    .gem-badge { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
+    
+    /* Input Area styling fix */
+    .stChatInput { position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: #0E1117; z-index: 100; }
 </style>
 """, unsafe_allow_html=True)
 
-def main():
-    st.title("PolicyPARAKH: Neural Legal Defense System")
-    st.markdown("<center><span class='tech-badge'>Powered by Gemini 3 Pro Preview & Gemini 2.5 Flash</span></center>", unsafe_allow_html=True)
-    st.markdown("##### The AI that reads the fine print and fights for you.")
+# --- SESSION STATE INIT ---
+if "sessions" not in st.session_state:
+    # Structure: {session_id: {'title': str, 'messages': []}}
+    st.session_state.sessions = {} 
+if "current_session_id" not in st.session_state:
+    new_id = str(uuid.uuid4())
+    st.session_state.sessions[new_id] = {'title': "New Chat", 'messages': []}
+    st.session_state.current_session_id = new_id
+if "family_profile" not in st.session_state:
+    st.session_state.family_profile = ""
+
+# --- FUNCTIONS ---
+def create_new_chat():
+    new_id = str(uuid.uuid4())
+    st.session_state.sessions[new_id] = {'title': "New Chat", 'messages': []}
+    st.session_state.current_session_id = new_id
+    # Reset file data for new chat context
+    if 'auditor_report' in st.session_state: del st.session_state.auditor_report
+    if 'architect_data' in st.session_state: del st.session_state.architect_data
+
+def get_current_messages():
+    return st.session_state.sessions[st.session_state.current_session_id]['messages']
+
+def add_message(role, content):
+    st.session_state.sessions[st.session_state.current_session_id]['messages'].append({"role": role, "content": content})
+    # Update title if it's the first user message
+    msgs = st.session_state.sessions[st.session_state.current_session_id]['messages']
+    if len(msgs) == 2 and msgs[1]['role'] == 'user':
+        title = msgs[1]['content'][:25] + "..."
+        st.session_state.sessions[st.session_state.current_session_id]['title'] = title
+
+# --- SIDEBAR (Mimicking the Screenshot) ---
+with st.sidebar:
+    # 1. New Chat Button
+    if st.button("➕ New chat", use_container_width=True, type="primary"):
+        create_new_chat()
     
-    # 1. Initialize
-    client = utils.initialize_gemini()
-    if not client: return
+    # 2. Family Card (Profile)
+    st.markdown("<div class='sidebar-header'>My Profile (Family Card)</div>", unsafe_allow_html=True)
+    with st.expander("👨‍👩‍👧‍👦 Edit Family Details"):
+        family_input = st.text_area("Ex: Mom (65, Diabetes), Me (30, Smoker)", value=st.session_state.family_profile)
+        if st.button("Save Profile"):
+            st.session_state.family_profile = family_input
+            st.success("Saved!")
 
-    # 2. Sidebar Input
-    st.sidebar.header("Input Policy")
-    uploaded_file = st.sidebar.file_uploader("Upload Policy (PDF)", type="pdf")
-
-    if uploaded_file and 'pdf_base64' not in st.session_state:
-        st.session_state.pdf_base64 = utils.base64_encode_pdf(uploaded_file)
-        st.sidebar.success("✅ Policy ingested.")
-        if 'auditor_report' in st.session_state: del st.session_state.auditor_report
-        if 'architect_data' in st.session_state: del st.session_state.architect_data
-
-    # 3. Agent Controls
-    if st.sidebar.button("Run Auditor Scan (Gemini 3 Pro)") and uploaded_file:
-        prompt = "Analyze for Room Rent, Co-Pay, and Exclusions."
-        report = auditor.generate_risk_assessment(client, prompt, st.session_state.pdf_base64)
-        if report:
-            st.session_state.auditor_report = report
-
-    if 'auditor_report' in st.session_state:
-        if st.sidebar.button("Run Architect Forecast (Live Data)"):
-            st.session_state.architect_data = architect.architect_agent_forecast(client, st.session_state.auditor_report)
-
-    # 4. Dashboard Display
-    st.markdown("---")
+    # 3. Gems / Tools (The Blue Print Features)
+    st.markdown("<div class='sidebar-header'>Gems (Tools)</div>", unsafe_allow_html=True)
     
-    # Auditor Section
-    if 'auditor_report' in st.session_state and st.session_state.auditor_report:
-        report = st.session_state.auditor_report
-        st.header("Auditor Risk Assessment")
-        
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            score = report['risk_score_0_to_100']
-            color = 'red' if score > 70 else ('orange' if score > 40 else 'green')
-            st.markdown(f"<div class='risk-meter' style='border-color:{color};'><p>Risk Score</p><p class='risk-score' style='color:{color}'>{score}</p></div>", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"**Insurer:** {report.get('insurance_company_name', 'Unknown')}")
-            st.markdown(f"**Co-Pay:** {report['co_pay_clause']}")
-            st.markdown(f"**Room Rent:** {report['room_rent_limit']}")
-            st.info(f"**Summary:** {report['auditor_summary']}")
-        st.markdown("---")
-
-    # Architect Section
-    if 'architect_data' in st.session_state:
-        df = st.session_state.architect_data
-        rate_used = df.attrs.get('inflation_rate_used', 10)
-        
-        st.subheader("Architect Agent: Future Value Forecast")
-        st.warning(f"📉 **Real-Time Data Used:** Calculated using the current **{rate_used}% Medical Inflation Rate** found online.")
-        
-        st.line_chart(
-            df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']],
-            color=["#007BFF", "#DC3545"]
-        )
-        st.markdown("---")
-
-    # 5. Chat Interface
-    st.subheader("Unified Chatbot (Ask about Scams, Value, or Law)")
-    if "messages" not in st.session_state: st.session_state.messages = []
-
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-
-    if prompt := st.chat_input("Ask about your policy..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            if 'pdf_base64' not in st.session_state:
-                st.write("Please upload a PDF first.")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        if st.button("⚖️ Courtroom", help="Simulate a legal battle"):
+            add_message("system", "ACTIVATED: Virtual Courtroom Mode. Describe your claim.")
+            st.rerun()
+    with col_t2:
+        if st.button("🛒 Scout", help="Compare with market"):
+            add_message("system", "ACTIVATED: Market Scout. Comparing policy...")
+            # Trigger scout immediately if report exists
+            client = utils.initialize_gemini()
+            if 'auditor_report' in st.session_state and client:
+                res = market_scout.compare_policy(client, st.session_state.auditor_report)
+                add_message("assistant", res)
+                st.rerun()
             else:
-                prompt_lower = prompt.lower()
-                
-                # Sentinel (Gemini 2.5) for Search
-                if any(k in prompt_lower for k in ["scam", "fraud", "review", "complaint", "settlement", "ratio"]):
-                    response = sentinel.sentinel_agent_check(client, st.session_state.auditor_report, prompt)
-                
-                # Architect for Finance
-                elif any(k in prompt_lower for k in ["value", "worth", "inflation", "future"]):
-                    if 'architect_data' in st.session_state:
-                         response = "See the inflation chart above."
-                    else:
-                        response = "Click 'Run Architect Forecast' to see financial data."
-                
-                # Chat fallback (Gemini 3 Pro) for reasoning
-                else:
-                    # Using Gemini 3 Pro for normal chat reasoning too
-                    context = f"Policy Summary: {st.session_state.get('auditor_report')}. User: {prompt}"
-                    res = client.models.generate_content(model='gemini-3-pro-preview', contents=context)
-                    response = res.text
-                
-                st.write(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                add_message("assistant", "Please upload a policy first to compare.")
+                st.rerun()
 
-if __name__ == "__main__":
-    main()
+    # 4. Chat History List
+    st.markdown("<div class='sidebar-header'>Recent Chats</div>", unsafe_allow_html=True)
+    # Reverse to show newest first
+    for sess_id, sess_data in list(st.session_state.sessions.items())[::-1]:
+        if st.button(f"💬 {sess_data['title']}", key=sess_id, use_container_width=True):
+            st.session_state.current_session_id = sess_id
+            st.rerun()
+
+# --- MAIN CHAT INTERFACE ---
+client = utils.initialize_gemini()
+
+# Header
+st.markdown(f"### PolicyPARAKH <span class='gem-badge'>3 Pro</span>", unsafe_allow_html=True)
+
+# File Uploader (Integrated subtly)
+uploaded_file = st.file_uploader("📎 Add Policy (PDF/Image)", type=["pdf", "png", "jpg"], label_visibility="collapsed")
+if uploaded_file:
+    # Processing Logic (Simplified for UI)
+    if 'current_file_name' not in st.session_state or st.session_state.current_file_name != uploaded_file.name:
+        with st.spinner("Processing..."):
+            if uploaded_file.type == "application/pdf":
+                data = utils.base64_encode_pdf(uploaded_file)
+            else:
+                import base64
+                data = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+            
+            st.session_state.file_data = data
+            st.session_state.current_file_name = uploaded_file.name
+            
+            # Auto-Run Auditor on upload
+            report = auditor.generate_risk_assessment(client, "Scan this.", data)
+            st.session_state.auditor_report = report
+            add_message("assistant", f"📄 **Policy Uploaded & Scanned!**\n\n**Risk Score:** {report.get('risk_score_0_to_100')}/100\n\n{report.get('auditor_summary')}")
+            
+            # Check Family Card conflicts
+            if st.session_state.family_profile:
+                fam_check = client.models.generate_content(
+                    model='gemini-3-pro-preview',
+                    contents=f"Policy Risks: {report}. Family Profile: {st.session_state.family_profile}. Cross-reference and warn me."
+                )
+                add_message("assistant", f"⚠️ **Family Alert:** {fam_check.text}")
+
+# Chat Area
+chat_container = st.container()
+with chat_container:
+    for msg in get_current_messages():
+        if msg['role'] == 'system':
+            st.info(msg['content'])
+        else:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+# Bottom Input Bar
+if prompt := st.chat_input("Ask about your policy, start a courtroom battle..."):
+    add_message("user", prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        response = ""
+        
+        # 1. Check if Courtroom Mode is implied
+        if "court" in prompt.lower() or "lawyer" in prompt.lower():
+            if 'auditor_report' in st.session_state:
+                response = courtroom.run_courtroom_simulation(client, st.session_state.auditor_report, prompt)
+            else:
+                response = "Please upload a policy first to start the courtroom simulation."
+        
+        # 2. Check if Sentinel (Scam/News) is needed
+        elif any(x in prompt.lower() for x in ["scam", "news", "fraud"]):
+            response = sentinel.sentinel_agent_check(client, st.session_state.get('auditor_report', {}), prompt)
+            
+        # 3. Check if Architect (Value) is needed
+        elif "value" in prompt.lower() or "inflation" in prompt.lower():
+             df = architect.architect_agent_forecast(client, {}) # Pass empty dict if no report, handles itself
+             st.session_state.architect_data = df
+             response = "I've generated the Inflation Forecast chart. Expand the tool section to view it."
+             st.line_chart(df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']], color=["#007BFF", "#DC3545"])
+
+        # 4. Default Chat (Gemini 3 Pro)
+        else:
+            context = f"""
+            System: You are PolicyPARAKH.
+            Family Context: {st.session_state.family_profile}
+            Current Policy Report: {st.session_state.get('auditor_report', 'None uploaded')}
+            User: {prompt}
+            """
+            res = client.models.generate_content(model='gemini-3-pro-preview', contents=context)
+            response = res.text
+
+        st.markdown(response)
+        add_message("assistant", response)
