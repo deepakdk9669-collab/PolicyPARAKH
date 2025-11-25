@@ -2,31 +2,31 @@ import streamlit as st
 from google.genai import types
 
 def run_courtroom_simulation(client, policy_summary, user_claim):
-    """
-    Simulates a legal battle between a Company Lawyer and a Consumer Advocate.
-    """
-    system_prompt = (
-        "You are the PolicyPARAKH Courtroom Engine. "
-        "Generate a script for a simulated legal argument based on the policy risks and user claim. "
-        "Characters: "
-        "1. 🏛️ Company Lawyer (Ruthless, cites exclusions). "
-        "2. 🛡️ User Advocate (Helpful, finds loopholes, cites IRDAI rules). "
-        "3. ⚖️ Judge (Gives the final verdict). "
-        "Format the output as a dramatic script."
-    )
+    system_instruction = """
+    You are the Virtual Courtroom Engine.
+    Simulate a dramatic legal battle.
     
-    user_prompt = f"Policy Context: {policy_summary}. User Claim Situation: {user_claim}. Fight!"
+    Characters:
+    1. 🏛️ Company Lawyer: Uses the policy text to reject the claim.
+    2. 🛡️ User Advocate: Uses REAL-TIME Google Search to find 'Consumer Court Judgments' favoring the user.
+    3. ⚖️ Judge: Decides based on logic.
+    
+    Output a Script format.
+    """
+    
+    user_prompt = f"Policy Context: {policy_summary}. User Claim: {user_claim}. Find similar court cases online and fight!"
 
     try:
-        with st.spinner("⚖️ Court is in session..."):
+        with st.spinner("⚖️ Researching Legal Precedents (Online)..."):
             response = client.models.generate_content(
-                model='gemini-3-pro-preview',
+                model='gemini-2.5-pro',
                 contents=user_prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=0.7 # High creativity for drama
+                    system_instruction=system_instruction,
+                    tools=[types.Tool(google_search=types.GoogleSearch())], # Real-Time Legal Search
+                    temperature=0.7
                 )
             )
-        return response.text
+            return response.text
     except Exception as e:
-        return f"Court Adjourned (Error): {e}"
+        return f"Court Error: {e}"
