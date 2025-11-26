@@ -1,38 +1,52 @@
 import streamlit as st
 from google.genai import types
-import tavily_search
+import search_engine
 
-def get_social_sentiment(client, company_name):
+def run_courtroom_simulation(client, policy_summary, user_claim, user_clues):
     """
-    Checks Twitter/Reddit/News for recent scams or praise.
+    Real-World Courtroom Simulator.
+    Uses Tavily/Search to find REAL legal precedents (Case Laws) to support the argument.
     """
-    search_query = f"{company_name} insurance reviews complaints scandal twitter reddit 2024 2025"
-    data = tavily_search.tavily_deep_search(search_query)
     
-    prompt = f"Analyze this search data about '{company_name}'. What is the current Market Sentiment? Are people angry or happy? Give a 1-line verdict."
-    res = client.models.generate_content(model='gemini-2.5-pro', contents=f"{prompt}\nData: {data}")
-    return res.text
+    # 1. Research Phase (Internet)
+    search_query = f"Consumer court judgments India insurance claim rejection {user_claim} precedents"
+    legal_research = search_engine.search_web(search_query)
+    
+    system_instruction = """
+    You are the 'PolicyPARAKH Courtroom Engine'.
+    Simulate a HIGH-STAKES, REALISTIC legal battle in an Indian Consumer Court.
+    
+    Characters:
+    1. 🏛️ **Company Lawyer (Adv. Batra):** Ruthless. Cites specific policy exclusions.
+    2. 🛡️ **User's Advocate (Adv. Mehra):** Sharp. Uses the 'User Clues' and REAL CASE LAWS (from research) to find loopholes.
+    3. ⚖️ **Judge:** Neutral observer.
+    
+    Output Structure:
+    1. **The Argument:** A dramatic script of the argument.
+    2. **Legal Precedent:** Cite a real or similar case from the search results.
+    3. **Win Probability Meter:** A percentage (0-100%) showing the user's chance of winning based on current facts.
+    4. **Next Move:** Ask the user for a specific piece of evidence (e.g., "Do you have the doctor's first prescription?") to increase winning chances.
+    """
+    
+    user_prompt = f"""
+    Policy Context: {policy_summary}
+    User Claim: {user_claim}
+    User's Secret Clues: {user_clues}
+    
+    Legal Research Data: {legal_research}
+    
+    Start the simulation!
+    """
 
-def check_local_presence(client, company_name, location):
-    """
-    Checks hospital network in a specific city (e.g., Gwalior).
-    """
-    search_query = f"{company_name} network hospitals list in {location} cashless coverage"
-    data = tavily_search.tavily_deep_search(search_query)
-    
-    prompt = f"Based on this data, does '{company_name}' have a good presence in '{location}'? List 2-3 major hospitals if found."
-    res = client.models.generate_content(model='gemini-2.5-pro', contents=f"{prompt}\nData: {data}")
-    return res.text
-
-def compare_policy(client, report):
-    """Standard Comparison"""
-    entity = report.get('entity_name', 'Provider')
-    # ... (Keep previous logic or use Tavily) ...
-    search_query = f"Better alternatives to {entity} health insurance India 2025 comparison"
-    data = tavily_search.tavily_deep_search(search_query)
-    
-    res = client.models.generate_content(
-        model='gemini-2.5-pro', 
-        contents=f"User has {entity}. Suggest 2 better alternatives based on: {data}"
-    )
-    return res.text
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-pro',
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.7
+            )
+        )
+        return response.text
+    except Exception as e:
+        return f"Court Error: {e}"
