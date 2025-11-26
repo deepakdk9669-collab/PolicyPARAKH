@@ -1,103 +1,110 @@
 import streamlit as st
 import utils
 import auditor
-import critic  # NEW
+import critic
 import sentinel
 import architect
 import courtroom
 import market_scout
-import tavily_search # NEW
 import uuid
-import base64
 
 # ... (Page Config & CSS same as before) ...
-st.set_page_config(page_title="PolicyPARAKH Ultimate", layout="wide", initial_sidebar_state="expanded")
-# ... (Keep CSS and Session State logic same as previous app.py) ...
+st.set_page_config(page_title="PolicyPARAKH Real-World", layout="wide", initial_sidebar_state="expanded")
+# ... (Keep CSS) ...
 
-# --- UPDATED SIDEBAR TOOLS ---
+# --- SESSION STATE ---
+if "sessions" not in st.session_state: st.session_state.sessions = {} 
+if "current_session_id" not in st.session_state:
+    new_id = str(uuid.uuid4())
+    st.session_state.sessions[new_id] = {'messages': [], 'title': 'New Chat'}
+    st.session_state.current_session_id = new_id
+if "family_profile" not in st.session_state: st.session_state.family_profile = ""
+
+# ... (Helper Functions) ...
+def add_message(role, content):
+    st.session_state.sessions[st.session_state.current_session_id]['messages'].append({"role": role, "content": content})
+
+# --- SIDEBAR ---
 with st.sidebar:
-    # ... (Keep New Chat & Profile section) ...
+    if st.button("➕ New Chat", use_container_width=True, type="primary"):
+        # ... (New chat logic) ...
+        pass # Fill with previous logic
     
+    with st.expander("👤 Family & Location Profile", expanded=True):
+        st.session_state.family_profile = st.text_area("Details", value=st.session_state.family_profile, placeholder="Ex: Mom (Diabetes), Location: Gwalior")
+
     st.subheader("💎 God Mode Tools")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("⚖️ Courtroom"):
-            add_message("system", "🔥 Courtroom Mode. I am using Tavily for case laws.")
-            st.rerun()
-    with col2:
-        if st.button("🛒 Market Scout"):
-            # UPDATED: Using Tavily for Market Research
-            if 'auditor_report' in st.session_state:
-                with st.spinner("🌐 Tavily Agent scouting the web..."):
-                    # Search for real alternatives
-                    tavily_data = tavily_search.tavily_deep_search("Best Health Insurance India 2025 comparison")
-                    client = utils.initialize_gemini()
-                    # Pass Tavily data to Gemini to summarize
-                    res = client.models.generate_content(
-                        model='gemini-2.5-pro',
-                        contents=f"Context from Web: {tavily_data}. User Policy: {st.session_state.auditor_report}. Compare and suggest switch."
-                    )
-                    add_message("assistant", res.text)
-            else:
-                st.toast("Upload a document first!")
-            st.rerun()
+    # We remove buttons here because we want the user to use the CHAT mainly, 
+    # but keeping them as shortcuts is fine.
+    if st.button("⚖️ Courtroom Simulator"):
+        add_message("system", "🔥 **Courtroom Mode:** Tell me your claim and any secret clues (e.g., 'I have a video recording').")
+        st.rerun()
 
-# ... (Keep Main Content & Upload Logic) ...
+# --- MAIN UI ---
+client = utils.initialize_gemini()
+st.markdown(f"### PolicyPARAKH <span class='gem-badge'>Real-World</span>", unsafe_allow_html=True)
 
-# --- UPDATED AUDITOR LOGIC WITH CRITIC ---
-if uploaded_file and client:
-    if 'current_file_name' not in st.session_state or st.session_state.current_file_name != uploaded_file.name:
-        # ... (File processing & encoding logic same as before) ...
-        
-            # 1. Run Auditor
-            report = auditor.generate_risk_assessment(client, "Scan this.", data, mime)
-            
-            if report:
-                # 2. Run Critic (Reflexion Step)
-                # We pass a snippet of text if possible, or just rely on Auditor's logic check
-                final_report = critic.review_report(client, report, "Check for consistency.")
-                
-                st.session_state.auditor_report = final_report
-                
-                # Display
-                doc_type = final_report.get('doc_type', 'Document')
-                score = final_report.get('risk_score_0_to_100', 'N/A')
-                
-                # Check if Critic added a warning
-                critic_note = ""
-                if 'CRITIC_WARNING' in final_report:
-                    critic_note = f"\n\n🕵️ **Critic's Note:** {final_report['CRITIC_WARNING']}"
+# ... (Upload Logic same as before) ...
+# Copy the uploader block from previous app.py
 
-                msg = f"""
-                ✅ **{doc_type} Analyzed (Critically Reviewed)**
-                
-                **Score:** {score}/100
-                
-                🚩 **Risks:** {final_report.get('bad_clauses')}
-                {critic_note}
-                """
-                add_message("assistant", msg)
-                
-                # ... (Family Check logic) ...
-            
-            st.rerun()
+# --- INTELLIGENT CHAT ENGINE ---
+# Display Messages
+for msg in st.session_state.sessions[st.session_state.current_session_id]['messages']:
+    with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-# --- UPDATED CHAT LOGIC WITH TAVILY ---
-if prompt := st.chat_input("Ask..."):
-    # ... (User message add logic) ...
-    
+if prompt := st.chat_input("Ask: 'Is this good in Gwalior?', 'Fight claim for cataract', 'Check reviews'..."):
+    add_message("user", prompt)
+    with st.chat_message("user"): st.markdown(prompt)
+
     with st.chat_message("assistant"):
-        # ... (Routing Logic) ...
+        response_placeholder = st.empty()
+        response_placeholder.markdown("🧠 *Analyzing Real-World Data...*")
         
-        # Sentinel / Scam Check using TAVILY
-        if any(x in prompt.lower() for x in ["scam", "fraud", "news"]):
-            with st.spinner("🕵️ Sentinel using Tavily Search..."):
-                search_data = tavily_search.tavily_deep_search(f"{prompt} insurance scam reviews")
-                res = client.models.generate_content(
-                    model='gemini-2.5-pro',
-                    contents=f"Web Evidence: {search_data}. User Query: {prompt}. Answer user."
-                )
-                st.markdown(res.text)
-                add_message("assistant", res.text)
+        # Context
+        context = st.session_state.get('auditor_report', {})
+        entity_name = context.get('entity_name', 'this company')
         
-        # ... (Other logic same) ...
+        # --- ROUTING LOGIC ---
+        prompt_lower = prompt.lower()
+        
+        # 1. LOCAL PRESENCE (Gwalior/City)
+        if any(x in prompt_lower for x in ["gwalior", "delhi", "mumbai", "city", "location", "near me"]):
+            # Extract location roughly or pass full prompt
+            location = "Gwalior" if "gwalior" in prompt_lower else "your location"
+            res = market_scout.check_local_presence(client, entity_name, location)
+        
+        # 2. SENTIMENT / REVIEWS
+        elif any(x in prompt_lower for x in ["review", "rating", "sentiment", "bad", "good", "scam"]):
+            res = market_scout.get_social_sentiment(client, entity_name)
+            
+        # 3. COURTROOM SIMULATOR (Arguments)
+        elif any(x in prompt_lower for x in ["fight", "argue", "court", "lawyer", "claim", "reject"]):
+            # User inputs clues in the prompt
+            res = courtroom.run_courtroom_simulation(client, context, prompt, user_clues=prompt)
+            
+        # 4. COMPARISON
+        elif "compare" in prompt_lower:
+            res = market_scout.compare_policy(client, context)
+            
+        # 5. INFLATION
+        elif "value" in prompt_lower:
+             df = architect.architect_agent_forecast(client, {})
+             st.session_state.architect_data = df
+             res = "Inflation Forecast:"
+             st.line_chart(df.set_index('Year')[['Actual_Coverage_Value', 'Real_Purchasing_Power']], color=["#007BFF", "#DC3545"])
+
+        # 6. GENERAL CHAT (With Internet)
+        else:
+            try:
+                from tavily_search import tavily_deep_search
+                # Internet Search for General Queries
+                web_data = tavily_deep_search(prompt)
+                
+                full_prompt = f"Context: {context}\nWeb Info: {web_data}\nUser: {prompt}"
+                res_obj = client.models.generate_content(model='gemini-2.5-pro', contents=full_prompt)
+                res = res_obj.text
+            except:
+                res = "Network Issue. Try again."
+
+        response_placeholder.markdown(res)
+        add_message("assistant", res)
