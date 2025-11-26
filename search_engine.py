@@ -3,51 +3,42 @@ from tavily import TavilyClient
 from duckduckgo_search import DDGS
 from googleapiclient.discovery import build
 
-# --- CONFIGURATION ---
-# Tavily Key
-TAVILY_KEY = st.secrets.get("TAVILY_API_KEY", "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")
+# Secrets Load
+TAVILY_KEY = st.secrets.get("TAVILY_API_KEY", "")
+GOOGLE_CSE_ID = st.secrets.get("GOOGLE_CSE_ID", "")
+GOOGLE_SEARCH_KEY = st.secrets.get("GOOGLE_SEARCH_KEY", "")
 
-# Google CSE Config
-GOOGLE_CSE_ID = st.secrets.get("GOOGLE_CSE_ID", "11902b0ebe4d84784")
-# We need a Google API Key specifically for Search (different from Gemini)
-# Assuming it's in the pool or secrets, otherwise fallback to DDG
-GOOGLE_SEARCH_KEY = st.secrets.get("GOOGLE_SEARCH_KEY", "") 
-
-def search_web(query):
+def search_web(query, focus="general"):
     """
-    The Master Search Function.
-    Rotates: Tavily -> Google CSE -> DuckDuckGo (Backup).
+    Rotates between Tavily -> Google -> DuckDuckGo.
+    focus: 'general', 'social' (reviews), 'maps' (locations)
     """
-    results = ""
-    
-    # 1. TRY TAVILY (Best for Deep Context)
-    try:
-        print("Attempting Tavily Search...")
-        client = TavilyClient(api_key=TAVILY_KEY)
-        response = client.search(query, search_depth="basic", max_results=3)
-        results = "\n".join([f"- {r['content']} (Source: {r['url']})" for r in response.get('results', [])])
-        return f"[Source: Tavily]\n{results}"
-    except Exception as e:
-        print(f"Tavily Failed: {e}")
+    search_query = query
+    if focus == "social": search_query += " site:reddit.com OR site:twitter.com OR site:quora.com review complaint"
+    elif focus == "maps": search_query += " hospital network address contact"
 
-    # 2. TRY GOOGLE CSE (Best for News)
+    results = []
+
+    # 1. Tavily (Primary)
+    if TAVILY_KEY:
+        try:
+            client = TavilyClient(api_key=TAVILY_KEY)
+            res = client.search(search_query, max_results=3)
+            return "\n".join([f"- {r['content']} ({r['url']})" for r in res.get('results', [])])
+        except: pass
+
+    # 2. Google (Secondary)
     if GOOGLE_SEARCH_KEY:
         try:
-            print("Attempting Google CSE...")
             service = build("customsearch", "v1", developerKey=GOOGLE_SEARCH_KEY)
-            res = service.cse().list(q=query, cx=GOOGLE_CSE_ID, num=3).execute()
-            results = "\n".join([f"- {item['snippet']} (Source: {item['link']})" for item in res.get('items', [])])
-            return f"[Source: Google]\n{results}"
-        except Exception as e:
-            print(f"Google CSE Failed: {e}")
+            res = service.cse().list(q=search_query, cx=GOOGLE_CSE_ID, num=3).execute()
+            return "\n".join([f"- {i['snippet']}" for i in res.get('items', [])])
+        except: pass
 
-    # 3. TRY DUCKDUCKGO (Unlimited Free Backup)
+    # 3. DuckDuckGo (Fallback)
     try:
-        print("Attempting DuckDuckGo (Backup)...")
         with DDGS() as ddgs:
-            # ddgs.text() returns a generator, so we list() it
-            ddg_results = list(ddgs.text(query, max_results=3))
-            results = "\n".join([f"- {r['body']} (Source: {r['href']})" for r in ddg_results])
-            return f"[Source: DuckDuckGo]\n{results}"
-    except Exception as e:
-        return f"All Search Engines Failed. Error: {e}"
+            res = list(ddgs.text(search_query, max_results=3))
+            return "\n".join([f"- {r['body']}" for r in res])
+    except:
+        return "No internet access available."
