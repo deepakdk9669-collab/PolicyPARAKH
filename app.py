@@ -191,7 +191,10 @@ if st.session_state.page == "home":
 
     if user_input:
         add_msg("user", user_input)
-        if audio_val: with st.chat_message("user"): st.markdown(user_input)
+        # Corrected Logic Block Here
+        if audio_val: 
+            with st.chat_message("user"): 
+                st.markdown(user_input)
         
         with st.chat_message("assistant"):
             placeholder = st.empty()
