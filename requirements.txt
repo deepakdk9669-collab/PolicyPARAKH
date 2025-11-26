@@ -4,3 +4,4 @@ pypdf
 pandas
 tavily-python
 duckduckgo-search
+google-api-python-client
