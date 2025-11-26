@@ -69,6 +69,7 @@ if "current_session_id" not in st.session_state:
     st.session_state.sessions[new_id] = {'messages': [], 'title': 'New Chat'}
     st.session_state.current_session_id = new_id
 if "family_profile" not in st.session_state: st.session_state.family_profile = ""
+if "active_tools" not in st.session_state: st.session_state.active_tools = []
 
 # --- HELPER FUNCTIONS ---
 def navigate(page): st.session_state.page = page; st.rerun()
@@ -170,7 +171,8 @@ if st.session_state.page == "home":
     if user_input:
         add_msg("user", user_input)
         if audio_val: 
-            with st.chat_message("user"): st.markdown(user_input)
+            with st.chat_message("user"): 
+                st.markdown(user_input)
         
         with st.chat_message("assistant"):
             placeholder = st.empty()
@@ -221,6 +223,8 @@ if st.session_state.page == "home":
 elif st.session_state.page == "courtroom":
     st.markdown("## ⚖️ Courtroom Simulator")
     if st.button("← Back"): navigate("home")
+    
+    st.info("Dedicated Simulator Mode. Upload evidence in Home first.")
     
     if claim := st.chat_input("State claim..."):
         with st.chat_message("user"): st.markdown(claim)
