@@ -1,22 +1,51 @@
-# 🛡️ PolicyPARAKH: The Neural Legal Defense System
+# 🛡️ PolicyPARAKH: The "Iron Man" Suit for Your Contracts
 
 > **"The AI that reads the fine print, fights the lawyer, and predicts the future—so you don't get scammed."**
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-PolicyPARAKH_Cloud-FF4B4B?style=for-the-badge&logo=streamlit)](https://policyparakh.streamlit.app/)
 [![Submission](https://img.shields.io/badge/Kaggle-Agents_Intensive_Capstone-20BEFF?style=for-the-badge&logo=kaggle)]()
-[![Architecture](https://img.shields.io/badge/Architecture-Recursive_Agent_Factory-blueviolet?style=for-the-badge)]()
+[![Architecture](https://img.shields.io/badge/Architecture-Hybrid_Agent_Swarm-blueviolet?style=for-the-badge)]()
 
 ---
 
-## 🚨 CRITICAL PROTOCOL: The "Genesis" Safety Gate
+## 📖 The Story: Why We Built This?
 
-**PolicyPARAKH utilizes a "Genesis Engine" that can write its own code to create new tools on the fly.**
+### **Meet Rahul.**
+Rahul is a 28-year-old software engineer living in Bangalore. Like many of us, he wants to protect his family. He bought a "Comprehensive" Health Insurance policy for his father (age 65), believing it covered "everything."
+Three years later, his father needed an urgent knee replacement surgery. The hospital bill was **₹5,00,000**.
+Rahul confidently submitted the claim, expecting a full reimbursement.
 
-* **The Risk:** If a malicious user asks the agent to "Scan the insurance company's database for vulnerabilities" or "Delete system files," a standard agent might obey.
-* **The Security Fix:** We implemented a **Root-Level Permission Gate**.
-    * **Low Risk (Data Retrieval):** The agent auto-executes (e.g., "Check crime rate in zip code 110001").
-    * **High Risk (System Action/Scraping):** The agent detects the intent and triggers a **Lockdown**. It requires an **Admin/Owner Key** to proceed.
-    * *Result:* The user cannot approve their own malicious requests; only the system owner can authorize new tool creation.
+**REJECTED.**
+*Reason:* "Clause 4.2: Joint replacements have a 4-year waiting period for pre-existing conditions."
+
+Rahul lost **₹5 Lakhs** because he didn't read Page 34, Paragraph 3, Line 2 of a 100-page PDF.
+
+### **This is not just Rahul's story.**
+*   **The Tenant Trap:** Students in Mumbai lose their security deposits because they missed a tiny clause about "Mandatory Painting Charges" hidden in the lease.
+*   **The Job Trap:** Fresh graduates sign offer letters without realizing they are agreeing to a **₹2 Lakh Penalty Bond** if they quit within 2 years.
+
+**PolicyPARAKH is here to stop that.** It is an AI Agent Swarm that fights for YOU, not the corporation. It reads the fine print so you don't have to.
+
+---
+
+## 🧨 The Problem: "The Fine Print Epidemic"
+
+**"Contracts are designed to be signed, not read."**
+
+1.  **The "Non-Disclosure" Trap (Insurance):** 40% of health claims are rejected because users failed to understand a hidden clause.
+    *   *Example:* If your father smokes and you didn't declare it, the insurer can cancel the **entire policy** 10 years later.
+2.  **The "Security Deposit" Scam (Rent):** Landlords often hide clauses like *"Painting charges deductible"* or *"10% annual hike"* in page 15 of a lease.
+3.  **The "Bond" Trap (Jobs):** Freshers sign offer letters without realizing they are agreeing to a **₹2 Lakh Penalty** if they quit within 2 years.
+
+---
+
+## 💡 The Solution: An "Adaptive Defense" System
+
+We built a **Swarm of 5 Specialized Agents** + **1 Genesis Agent**, powered by a **Hybrid Brain (Gemini + Groq)**. It works on **ANY Contract** (Rent, Job, Loan, Insurance).
+
+*   **Unified Interface:** You don't talk to 5 bots. You talk to **One Coordinator** that manages the swarm.
+*   **Proactive Defense:** It doesn't just summarize; it **Simulates** (Courtroom), **Predicts** (Financials), and **Verifies** (Sentinel).
+*   **Zero-Trust Security:** With the **Genesis Engine**, it can write its own code to solve new problems, but only under strict **3-Layer Guardrails**.
 
 ---
 
@@ -34,160 +63,209 @@ This project is a direct application of the **Google & Kaggle AI Agents Intensiv
 
 ---
 
-## 📝 Project Overview
+## 🚀 What Does It Do? (The 5-Agent Swarm)
 
-**PolicyPARAKH** is an Autonomous Multi-Agent System designed to bridge the information gap between billion-dollar corporations and the common consumer.
+Think of PolicyPARAKH as a team of 5 elite experts sitting inside your computer, working 24/7 for your safety:
 
-It functions through a **Unified Chatbot Interface**. Unlike standard bots that just answer questions, this Chatbot acts as a **"Central Command"**. When you talk to the bot, you aren't talking to one AI—you are talking to a Coordinator that silently dispatches tasks to 5 specialized agents (Auditor, Detective, Lawyer, Architect, Scout) and aggregates their findings into a single, coherent response.
+### 1. 🔍 The Auditor Agent (The Eagle Eye)
+*   **Role:** The Forensic Accountant.
+*   **Power:** It reads every single word of your PDF in seconds using **Gemini 2.5 Flash**.
+*   **Mission:** It finds the "Red Flags" specific to your document type.
+    *   *Insurance:* Finds "Room Rent Capping", "Co-Pay", "Disease Sub-limits".
+    *   *Rent:* Finds "Lock-in Period", "Hidden Maintenance Charges".
+    *   *Job:* Finds "Notice Period Buyout", "Non-Compete Clauses".
 
----
+### 2. 🕵️ The Sentinel Agent (The Detective)
+*   **Role:** The Private Investigator.
+*   **Power:** It bypasses the document and goes straight to the internet.
+*   **Mission:** "Trust, but Verify." It searches Reddit, Twitter, and Consumer Forums for *recent* scams or complaints about the company.
+    *   *Example:* "Star Health data leak 2024" or "Landlord disputes in Indiranagar".
 
-## 🧨 The Problem
-
-**"Insurance is sold, not bought—and the contract is designed to be unread."**
-
-1.  **The "Non-Disclosure" Trap:** 40% of health claims are rejected because users failed to understand a hidden clause.
-    * *Example:* If your father smokes and you didn't declare it, the insurer can cancel the **entire policy** 10 years later.
-2.  **The "Future Shock":** Users buy a ₹5 Lakh cover today, ignoring that **Inflation** will make it worthless by 2035.
-    * *Example:* Cancer treatment in 2035 will cost 4x what it costs today.
-3.  **The Pre-Existing Exclusion:**
-    * *Example:* If your mom has joint pain today, "Knee Replacement" is excluded for 4 years.
-4.  **The Unforeseen Question:** Users often ask dynamic questions ("What is the crime rate in the area for my Home Insurance?") that standard hard-coded agents cannot answer.
-
----
-
-## 💡 The Solution: An "Adaptive Defense" System
-
-We built a **Swarm of 5 Specialized Agents** + **1 Genesis Agent (Tool Maker)**:
-
-### 1. 🤖 The Central Chatbot (The Interface)
-This is the primary feature. It masks the complexity of the swarm. You upload a document, and the Chatbot becomes your single point of contact. It creates a persistent memory stream where it remembers your family details, your previous arguments in court, and your financial concerns.
-
-### 2. 🔍 The Auditor Agent (Core Brain)
-* **Task:** Ingests the raw PDF (Gemini 2.5 Flash).
-* **Action:** Scans for Room Rent Capping, Co-Pay, and Disease-wise Sub-limits.
-* **Output:** A quantitative **Risk Score (0-100)**.
-
-### 3. 🕵️ The Sentinel Agent (The Real-Time Detective)
-* **Mandate:** "Trust, but Verify."
-* **Task:** Bypasses the document. It uses **RAG** to search Reddit/Consumer Forums for *recent* regulatory actions against the company.
+### 3. ⚖️ The Lawyer Agent (The Fighter)
+*   **Role:** The Virtual Litigator.
+*   **Power:** It simulates a **Courtroom Drama** using **Groq (Llama 3)** for high-speed dialogue.
+*   **Mission:** It argues *against* the company to see if your contract holds up in court.
+    *   **Judge Dredd:** Presides over the case.
+    *   **Mr. Wolf (Prosecution):** Ruthless company lawyer citing clauses.
+    *   **Ms. Hope (Defense):** Your advocate finding loopholes.
 
 ### 4. 📉 The Architect Agent (The Time Traveler)
-* **Task:** Financial Forecasting.
-* **Visual:** A dynamic graph showing the divergence between **Premium Paid (Rising)** vs **Coverage Value (Plummeting)** over 10 years.
+*   **Role:** The Financial Futurist.
+*   **Power:** It uses **Plotly** to visualize the future.
+*   **Mission:** It calculates the "Real Value" of your money.
+    *   *Example:* "This ₹5 Lakh cover will only be worth ₹2.5 Lakhs in 10 years due to 7% medical inflation. You need to upgrade."
 
-### 5. 🧠 The Critic Agent (Quality Control)
-* **Role:** The Supervisor.
-* **Loop:** The Auditor drafts a report. The **Critic Agent** reads it and checks for hallucinations. If the Auditor misses a clause, the Critic forces a re-read.
-
-### 6. 🧬 The Genesis Agent (Dynamic Tool Maker)
-* **Role:** The Engineer.
-* **Scenario:** User asks: *"Is this hospital network good in my zipcode?"*
-* **Action:** The system realizes it has no "Hospital Tool." The Genesis Agent writes a temporary Python script to query local data.
-* **Safety Protocol:** If the tool requires accessing sensitive system resources or scraping protected sites, it triggers the **Owner Permission Gate**.
+### 5. 🧬 The Genesis Agent (The Engineer)
+*   **Role:** The Tool Maker.
+*   **Power:** It can write its own Python code.
+*   **Mission:** If you ask a question the system doesn't know (e.g., "Is this hospital near me?"), it *writes a temporary script* to find the answer.
+    *   **BYOK (Bring Your Own Key):** If it needs a Weather API key, it asks you for it, learns the skill, and executes it.
 
 ---
 
-## 🚀 Key Features ("God Mode")
+## 🎮 How to Use It? (Step-by-Step)
+
+**Step 1: Upload Your Document** 📄
+Drag and drop your **Insurance Policy**, **Rent Agreement**, or **Job Offer Letter**.
+
+**Step 2: Watch the Magic** ✨
+The system automatically detects the document type:
+*   *Is it a Rent Agreement?* -> The **Tenant Guardian** wakes up.
+*   *Is it a Job Offer?* -> The **Career Shield** wakes up.
+
+**Step 3: Get the Report** 📊
+You get a simple **Risk Score (0-100)**.
+*   *0-30:* Safe.
+*   *70-100:* **DANGER!** Do not sign.
+
+**Step 4: Fight in Court** ⚖️
+Go to the "Virtual Courtroom" in the sidebar.
+*   **Scenario:** "I need to claim for a heart attack."
+*   **Action:** Watch **Judge Dredd** and two AI Lawyers argue your case live!
+
+---
+
+## 🌟 Key Features ("God Mode")
 
 ### 🔹 1. The Family Card (Contextual Memory)
 Instead of generic advice, you save a **Family Profile** once. The Agent "remembers" this via **LangChain Memory**.
-* **User Input:** *"Save this: Mom (65, Joint Pain), Dad (Smoker), Self (25, Asthmatic)."*
-* **Agent Action:** When you upload a policy, it cross-references YOUR family:
-    * *"⚠️ **Alert for Mom:** Clause 4.1 excludes Joint Replacement for 4 years. Do not buy."*
-    * *"⚠️ **Alert for Dad:** Policy requires a 'Smoker Declaration'. If missed, claims will be rejected."*
+*   **User Input:** *"Save this: Mom (65, Joint Pain), Dad (Smoker), Self (25, Asthmatic)."*
+*   **Agent Action:** When you upload a policy, it cross-references YOUR family:
+    *   *"⚠️ **Alert for Mom:** Clause 4.1 excludes Joint Replacement for 4 years. Do not buy."*
 
-### 🔹 2. Virtual Courtroom (Interactive Simulation)
-This feature gamifies the legal process. It creates a **Roleplay Simulation** with **Human-in-the-Loop**.
-* **Initialization:** The system spawns two AI personas:
-    * **The Company Lawyer:** Ruthless, clause-focused, aims to reject the claim.
-    * **The User Advocate:** Helpful, law-aware, aims to find loopholes.
-* **The Scenario:** User inputs a claim (e.g., "I need cataract surgery").
-* **The Argument:** The AI Lawyer cites specific clauses from *your* PDF. You must provide counter-arguments or evidence (like doctors' notes) to win the case.
+### 🔹 2. Cinematic Courtroom (Judge, Jury & Witnesses) 🎬
+We gamified the legal process into a **Real-Time Drama**.
+*   **The Cast:**
+    *   **Judge Dredd (AI):** Presides over the case.
+    *   **Mr. Wolf (Prosecution):** Ruthless company lawyer.
+    *   **Ms. Hope (Defense):** Your advocate.
+    *   **The Witnesses:** The **Architect Agent** (Time Traveler) and **Sentinel Agent** (Detective) are called to the stand to provide evidence.
+*   **The Experience:** The script plays out line-by-line with cinematic delays, creating high-stakes tension.
 
-### 🔹 3. The Market Scout (Comparison Engine)
-It creates a comparison table of your uploaded policy vs. the **Best in Market**.
-* *"Don't buy this. Switch to [Alternative X]. It covers your Mom's diabetes from Day 1."*
+### 🔹 3. Deep Memory (The Vault) 🧠
+The system never forgets.
+*   **Case History:** Every verdict, every argument, and every risk report is stored in the **Knowledge Vault**.
+*   **Evolution:** If you win a case against "Star Health" today, the system remembers that argument for your next uploaded policy.
+
+### 🔹 4. "Bring Your Own Key" (BYOK) Protocol 🔐
+We respect user privacy and speed.
+*   **Freedom:** Users can plug in their own **Groq API Key** in the sidebar to unlock maximum speed for the Courtroom debate.
+
+### � 5. The "Self-Evolving" Genesis Engine (BYOK + Vote) 🗳️
+The system is not static; it evolves based on user needs.
+*   **Scenario:** User asks for "Live Flood Risk" (requires Weather API).
+*   **The Block:** System realizes it lacks the API key.
+*   **The Offer:** *"I lack the Weather Key. Enter YOUR key for this session, or Vote for me to add it."*
+*   **The Feedback Loop:** If 5 users provide a key, the Admin gets a notification to buy a permanent key. **The system grows with the community.**
 
 ---
 
-## 🏗️ System Architecture Flow
+## 🏗️ System Architecture: The "Double-Vision" Design
 
-The system follows a **LangChain-Orchestrated Workflow**:
+To understand PolicyPARAKH, you need to see it at two levels: The **Macro Flow** (User Journey) and the **Micro Swarm** (Agent Interaction).
 
-1.  **Input Layer:** User uploads PDF -> **Coordinator Agent** takes control.
-2.  **Capability Check:** Can standard agents handle this?
-    * **Yes:** Dispatch to Swarm (Auditor, Sentinel, Architect).
-    * **No:** Dispatch to **Genesis Agent** to build a new tool.
-3.  **Parallel Execution:** Agents execute tools (DuckDuckGo, Plotly).
-4.  **Reflexion:** The **Critic Agent** reviews findings.
-5.  **Synthesis:** Final Report generated.
+### 🔭 View 1: The Macro Flow (User Journey)
+This is what the user experiences. It's a simple, linear path from Upload to Defense.
+
+```mermaid
+graph LR
+    %% Styles
+    classDef user fill:#000,stroke:#fff,color:#fff
+    classDef bot fill:#2C2C2E,stroke:#4F8BF9,color:#fff
+    classDef action fill:#1E1F20,stroke:#00FF41,color:#fff
+
+    User(👤 User) --> |Upload PDF| Router[🚦 Universal Router]:::bot
+    Router --> |Classify| Swarm[🐝 Agent Swarm]:::action
+    Swarm --> |Analyze| Report[📄 Risk Report]:::bot
+    Report --> |Simulate| Court[⚖️ Virtual Courtroom]:::action
+    Court --> |Verdict| User
+```
+
+---
+
+### 🔬 View 2: The Neural Swarm (Under the Hood)
+This is where the magic happens. The **5-Layer Iron Dome** architecture ensures that every document is treated by a specialist, not a generalist.
 
 ```mermaid
 graph TD
     %% Styles
-    classDef user fill:#000,stroke:#fff,color:#fff
-    classDef bot fill:#2C2C2E,stroke:#4F8BF9,color:#fff
-    classDef agent fill:#1E1F20,stroke:#00FF41,color:#fff,stroke-dasharray: 5 5
-    classDef critic fill:#450a0a,stroke:#EF4444,color:#fff
-    classDef tool fill:#fff,stroke:#333,color:#000
+    classDef router fill:#FF4B4B,stroke:#fff,color:#fff
+    classDef specialist fill:#00CC66,stroke:#fff,color:#fff
+    classDef experience fill:#2C2C2E,stroke:#4F8BF9,color:#fff
+    classDef safety fill:#450a0a,stroke:#EF4444,color:#fff
 
-    User(👤 User ) --> |"Upload PDF + Prompt"| Chat[🤖 Central Chatbot Interface]:::bot
-    Chat --> |"Dispatch Task"| Brain{🧠 Coordinator}:::bot
+    Input(📄 User Upload) --> Router{🚦 Layer 1: Universal Router}:::router
 
-    subgraph "The Neural Swarm"
-        Brain --> Auditor[🔍 Auditor Agent]:::agent
-        Brain --> Sentinel[🕵️ Sentinel Agent]:::agent
-        Brain --> Architect[📉 Architect Agent]:::agent
-        Brain --> Lawyer[⚖️ Lawyer Persona]:::agent
+    subgraph "Layer 2: The Specialist Swarm"
+        Router -- "Insurance" --> Auditor[🔍 Auditor Agent]:::specialist
+        Router -- "Rent" --> Tenant[🏠 Tenant Guardian]:::specialist
+        Router -- "Job" --> Career[💼 Career Shield]:::specialist
     end
 
-    subgraph "Meta-Cognition Layer"
-        Auditor & Sentinel & Architect & Lawyer --> Critic{🧐 Critic Agent}:::critic
-        Critic -- "Hallucination Detected" --> Brain
-        Critic -- "Verified" --> Response[⚡ Synthesis Engine]:::bot
+    subgraph "Layer 3: The Experience Swarm"
+        Auditor & Tenant & Career --> Architect["Architect Agent (Plotly)"]:::experience
+        Auditor & Tenant & Career --> Lawyer["⚖️ Lawyer Persona (Llama 3)"]:::experience
+        Auditor & Tenant & Career --> Scout["🔭 Market Scout (Search)"]:::experience
     end
 
-    subgraph "The Genesis Engine (Self-Expansion)"
-        Brain -- "Unknown Task?" --> Genesis[🧬 Genesis Agent]:::agent
-        Genesis -- "Write New Tool" --> Gate{🔒 Owner Permission Gate}:::critic
-        Gate -- "Approved" --> NewTool[🛠️ New Python Tool]:::tool
-        Gate -- "Denied" --> Block[🚫 Action Blocked]:::critic
+    subgraph "Layer 4: The Genesis Engine"
+        Router -- "Unknown Task?" --> Genesis[🧬 Genesis Agent]:::experience
+        Genesis -- "Draft Code" --> Critic{🧐 Code Critic}:::safety
+        Critic -- "Approved" --> Gate{🔒 Permission Gate}:::safety
+        Gate -- "Allowed" --> Tool[🛠️ New Python Tool]:::specialist
     end
 
-    subgraph "External Tools"
-        Sentinel <--> |RAG| Web(🌐 DuckDuckGo):::tool
-        Architect <--> |Math| Plot(📊 Plotly Engine):::tool
-        Lawyer <--> |Context| Mem(🗂️ Family Profile):::tool
+    subgraph "Layer 5: The Iron Dome"
+        Architect & Lawyer & Scout & Tool --> Sentinel[🕵️ Sentinel Agent]:::safety
+        Sentinel --> Output(⚡ Final Response)
     end
-
-    Response --> Chat
-    Chat --> User
 ```
----
+### 🧠 Agent Roster (Who does what?)
 
-## 🛠️ Technical Stack
-
-* **LLM Backbone:**
-    * **Gemini 2.5 Flash:** Speed & Context.
-    * **Gemini 2.5 Pro:** Reasoning & Code Generation (Genesis).
-* **Orchestration:** **LangChain** (for Chains, Memory, and dynamic Tool construction).
-* **Frontend:** Streamlit (UI).
-* **Tools:** `DuckDuckGoSearchRun`, `Plotly`.
-* **Security:** Round-Robin API Key Rotation & **Owner-Only Execution Gates**.
-
----
-
-## 📥 Installation
-
-1.  **Clone:** `git clone https://github.com/your-username/PolicyPARAKH.git`
-2.  **Install:** `pip install -r requirements.txt`
-3.  **Secrets:** Add your Google API Keys to `.streamlit/secrets.toml`.
-4.  **Run:** `streamlit run app.py`
+| Agent | Model | Role |
+| :--- | :--- | :--- |
+| **Auditor Agent** | Gemini 2.5 Flash | **Insurance Specialist.** Finds Co-pay, Capping. |
+| **Tenant Guardian** | Gemini 2.5 Flash | **Real Estate Specialist.** Finds Lock-in, Eviction traps. |
+| **Career Shield** | Gemini 2.5 Flash | **Employment Specialist.** Finds Bonds, Non-Compete. |
+| **Genesis Agent** | Gemini 2.5 Pro | **The Engineer.** Writes Python code for unknown tasks. |
+| **The Lawyer** | Llama 3 (Groq) | **The Simulator.** Argues against you to test your case. |
+| **The Sentinel** | Gemini 2.5 Flash | **The Safety Net.** Checks for hallucinations & scams. |
 
 ---
 
-## 🌟 Project Impact & Novelty
+## 👨‍💻 Behind the Scenes (Code Logic)
+
+**The "Swarm" Coordinator (`app.py`)**
+The main app acts as the conductor. It doesn't do the work; it delegates.
+```python
+# When a file is uploaded...
+if uploaded_file:
+    # 1. Wake up the Auditor
+    auditor = AuditorAgent()
+    report = auditor.audit(text)
+    
+    # 2. Wake up the Sentinel
+    sentinel = SentinelAgent()
+    reputation = sentinel.check(company_name)
+    
+    # 3. Display results in Glass UI
+    render_dashboard(report, reputation)
+```
+
+**The "Persona" Injection (`agents/lawyer.py`)**
+We don't just ask for a summary; we inject a personality.
+```python
+# We inject "Persona" directly into the system prompt
+prompt = """
+You are Mr. Wolf, a ruthless company lawyer. 
+Your goal: Find ONE clause to reject this claim.
+Tone: Sarcastic, professional, cold.
+"""
+```
+
+---
+
+## 🌟 Project Impact
 
 **PolicyPARAKH** addresses a critical gap in the fintech ecosystem: **Information Asymmetry.**
 
@@ -196,4 +274,44 @@ While corporations utilize advanced data analytics and legal teams to minimize p
 It transforms a static document into a **Dynamic Risk Assessment**, ensuring that financial products serve the user, not just the issuer. This is the future of **Consumer Protection AI**.
 
 ---
-*Built for the Kaggle AI Agents Intensive 2025.*
+
+## 🛠️ Technical Stack
+
+*   **LLM Backbone:**
+    *   **Gemini 2.5 Flash:** Speed & Context (Auditor, Scout).
+    *   **Gemini 2.5 Pro:** Reasoning & Code Generation (Genesis).
+    *   **Groq (Llama 3 70B):** High-Speed Inference (Courtroom Simulator).
+*   **Orchestration:** **LangChain** (for Chains, Memory, and dynamic Tool construction).
+*   **Frontend:** Streamlit (UI) with **Frosted Glass CSS**.
+*   **Tools:** `DuckDuckGoSearchRun`, `Plotly`, `PythonREPL`.
+*   **Security:** Round-Robin API Key Rotation & **Owner-Only Execution Gates**.
+
+---
+
+## 👨‍💻 How to Run Locally
+
+1.  **Clone the Repo:**
+    ```bash
+    git clone https://github.com/yourusername/policyparakh.git
+    cd policyparakh
+    ```
+
+2.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Set up Secrets:**
+    Create `.streamlit/secrets.toml` and add your API keys:
+    ```toml
+    GOOGLE_API_KEY = "your_key"
+    GROQ_API_KEY = "your_key"
+    ```
+
+4.  **Run the App:**
+    ```bash
+    streamlit run app.py
+    ```
+
+---
+*Built with ❤️ for the Kaggle AI Agents Intensive 2025.*
