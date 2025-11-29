@@ -8,24 +8,7 @@ class GenesisTools:
         self.repl = PythonREPL()
         self.security = SecurityManager()
 
-    def safe_python_repl(self, code: str) -> str:
-        """
-        Executes Python code safely. 
-        Triggers Permission Gate for high-risk keywords.
-        """
-        high_risk_keywords = ["os.system", "subprocess", "shutil", "delete", "remove", "drop table"]
-        
-        is_high_risk = any(keyword in code for keyword in high_risk_keywords)
-        
-        if is_high_risk:
-            # In a real agent loop, we can't easily pause for UI input in the middle of a tool call 
-            # without a complex callback system. 
-            # For this demo, we will check if the Admin Key is ALREADY present in session state 
-            # or return a message asking the user to authorize.
-            
-            allowed, token = self.security.check_permission_gate(f"Execute Code: {code[:50]}...")
-            if not allowed:
-                return f"⛔ ACTION BLOCKED: High Risk Code Detected. Admin Token: {token}. Please send this to Admin for approval."
+
         
     def log_admin_request(self, tool, status, message):
         """Logs admin requests to a JSON file."""

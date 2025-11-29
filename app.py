@@ -62,7 +62,8 @@ with st.sidebar:
     st.markdown("---")
     
     # Settings / BYOK
-    with st.expander("⚙️ Settings"):
+    with st.expander("⚙️ Settings", expanded=True):
+        use_search = st.toggle("🌍 Real-Time Search", value=True, help="Enable live web search for every query.")
         groq_key = st.text_input("Groq API Key", type="password")
         if groq_key:
             st.session_state["GROQ_API_KEY"] = groq_key
@@ -144,12 +145,21 @@ if st.session_state.current_view == "Chat":
         # AI Response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                from langchain_google_genai import ChatGoogleGenerativeAI
-                llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", google_api_key=security.get_next_api_key())
-                context = st.session_state.get('policy_text', '')[:5000]
-                response = llm.invoke(f"Context: {context}\n\nUser: {prompt}").content
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                try:
+                    from utils.ai_engine import AIEngine
+                    engine = AIEngine()
+                    
+                    # Use Genesis Brain for Chat
+                    response = engine.run_genesis_agent(
+                        prompt=prompt, 
+                        context=st.session_state.get('policy_text', '')
+                    )
+                    
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                except Exception as e:
+                    st.error(f"System Error: {str(e)}")
+                    st.session_state.messages.append({"role": "assistant", "content": f"⚠️ Error: {str(e)}"})
 
 # 2. COURTROOM VIEW
 elif st.session_state.current_view == "Courtroom":
