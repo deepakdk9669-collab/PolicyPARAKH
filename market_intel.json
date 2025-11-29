@@ -1,0 +1,72 @@
+{
+    "companies": [
+        {
+            "name": "Star Health",
+            "flags": 145,
+            "issues": "Room Rent Capping"
+        },
+        {
+            "name": "HDFC Ergo",
+            "flags": 89,
+            "issues": "Co-Pay Hidden"
+        },
+        {
+            "name": "Niva Bupa",
+            "flags": 76,
+            "issues": "Waiting Period"
+        },
+        {
+            "name": "ICICI Lombard",
+            "flags": 65,
+            "issues": "Claim Rejection"
+        },
+        {
+            "name": "Care Insurance",
+            "flags": 54,
+            "issues": "Sub-limits"
+        }
+    ],
+    "issues_distribution": {
+        "Room Rent Capping": 40,
+        "Waiting Period": 30,
+        "Co-Pay Hidden": 15,
+        "Claim Rejection": 10,
+        "Sub-limits": 5
+    },
+    "metrics": {
+        "total_policies_analyzed": 1250,
+        "top_risk_zip": "560034 (Koramangala)"
+    },
+    "geo_risk": [
+        {
+            "pincode": "560034",
+            "risk_score": 85,
+            "reports": 120,
+            "area": "Koramangala"
+        },
+        {
+            "pincode": "560102",
+            "risk_score": 78,
+            "reports": 95,
+            "area": "HSR Layout"
+        },
+        {
+            "pincode": "560001",
+            "risk_score": 65,
+            "reports": 80,
+            "area": "MG Road"
+        },
+        {
+            "pincode": "560066",
+            "risk_score": 92,
+            "reports": 150,
+            "area": "Whitefield"
+        },
+        {
+            "pincode": "560078",
+            "risk_score": 45,
+            "reports": 40,
+            "area": "JP Nagar"
+        }
+    ]
+}

@@ -1,0 +1,85 @@
+/* Gemini-Inspired Theme */
+
+/* Main Background - Soft Dark */
+.stApp {
+    background-color: #131314;
+    /* Google's Dark Mode Hex */
+    color: #e3e3e3;
+}
+
+/* Sidebar - Slightly Lighter */
+section[data-testid="stSidebar"] {
+    background-color: #1e1f20;
+    border-right: 1px solid #303134;
+}
+
+/* Gradient Text (Gemini Blue/Purple) */
+h1,
+h2,
+h3 {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(90deg, #4b90ff, #a34bff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+}
+
+/* Chat Messages - Bubble Style */
+.stChatMessage {
+    background-color: transparent;
+    border: none;
+}
+
+div[data-testid="stChatMessageContent"] {
+    background-color: #1e1f20;
+    border-radius: 18px;
+    padding: 16px;
+    border: 1px solid #303134;
+}
+
+/* User Message - Blue Tint */
+div[data-testid="stChatMessageContent"][data-testid="user"] {
+    background-color: #2c3e50;
+}
+
+/* Buttons - Gemini Gradient */
+.stButton>button {
+    background: linear-gradient(135deg, #4b90ff 0%, #a34bff 100%);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    /* Pill shape */
+    padding: 10px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    box-shadow: 0 0 15px rgba(75, 144, 255, 0.4);
+    transform: scale(1.02);
+}
+
+/* Inputs - Clean & Rounded */
+.stTextInput>div>div>input,
+.stTextArea>div>div>textarea {
+    background-color: #1e1f20;
+    border: 1px solid #303134;
+    border-radius: 12px;
+    color: white;
+}
+
+/* Glass Container (Subtle) */
+.glass-container {
+    background: rgba(30, 31, 32, 0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+/* Metrics */
+div[data-testid="stMetricValue"] {
+    color: #a34bff !important;
+}
