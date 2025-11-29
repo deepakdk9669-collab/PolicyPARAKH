@@ -1,31 +1,29 @@
-/* Gemini-Inspired Theme */
+/* Gemini-Inspired Theme - PolicyPARAKH */
 
-/* Main Background - Soft Dark */
+/* Main Background - Deep Space Dark */
 .stApp {
-    background-color: #131314;
-    /* Google's Dark Mode Hex */
+    background-color: #0e0e0e;
     color: #e3e3e3;
-}
-
-/* Sidebar - Slightly Lighter */
-section[data-testid="stSidebar"] {
-    background-color: #1e1f20;
-    border-right: 1px solid #303134;
-}
-
-/* Gradient Text (Gemini Blue/Purple) */
-h1,
-h2,
-h3 {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(90deg, #4b90ff, #a34bff);
+}
+
+/* Sidebar - Glassmorphism */
+section[data-testid="stSidebar"] {
+    background-color: #131314;
+    border-right: 1px solid #2d2e30;
+}
+
+/* Typography - Gradient Headers */
+h1, h2, h3 {
+    background: linear-gradient(90deg, #4b90ff, #ff5546);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-/* Chat Messages - Bubble Style */
+/* Chat Bubbles */
 .stChatMessage {
     background-color: transparent;
     border: none;
@@ -33,53 +31,116 @@ h3 {
 
 div[data-testid="stChatMessageContent"] {
     background-color: #1e1f20;
-    border-radius: 18px;
-    padding: 16px;
-    border: 1px solid #303134;
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px solid #2d2e30;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* User Message - Blue Tint */
 div[data-testid="stChatMessageContent"][data-testid="user"] {
-    background-color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border: 1px solid #3e5871;
 }
 
-/* Buttons - Gemini Gradient */
+/* Buttons - Premium Gradient Pills */
 .stButton>button {
-    background: linear-gradient(135deg, #4b90ff 0%, #a34bff 100%);
+    background: linear-gradient(135deg, #4b90ff 0%, #0055ff 100%);
     color: white;
     border: none;
     border-radius: 24px;
-    /* Pill shape */
-    padding: 10px 24px;
-    font-weight: 500;
+    padding: 12px 28px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(75, 144, 255, 0.3);
 }
 
 .stButton>button:hover {
-    box-shadow: 0 0 15px rgba(75, 144, 255, 0.4);
-    transform: scale(1.02);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(75, 144, 255, 0.5);
 }
 
-/* Inputs - Clean & Rounded */
+/* Inputs - Clean & Modern */
 .stTextInput>div>div>input,
 .stTextArea>div>div>textarea {
     background-color: #1e1f20;
-    border: 1px solid #303134;
+    border: 1px solid #2d2e30;
     border-radius: 12px;
     color: white;
+    padding: 12px;
 }
 
-/* Glass Container (Subtle) */
-.glass-container {
-    background: rgba(30, 31, 32, 0.6);
-    backdrop-filter: blur(12px);
+.stTextInput>div>div>input:focus,
+.stTextArea>div>div>textarea:focus {
+    border-color: #4b90ff;
+    box-shadow: 0 0 0 2px rgba(75, 144, 255, 0.2);
+}
+
+/* Member Cards - Glassmorphism */
+.member-card {
+    background: rgba(30, 31, 32, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: transform 0.2s ease;
+}
+
+.member-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(75, 144, 255, 0.3);
+}
+
+.member-role {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.member-name {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.member-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+/* Result Card - The "Dashboard" in Chat */
+.result-card {
+    background: #131314;
     border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid #2d2e30;
     padding: 24px;
-    margin-bottom: 24px;
+    margin-top: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-/* Metrics */
-div[data-testid="stMetricValue"] {
-    color: #a34bff !important;
+.risk-score-high { color: #ff4b4b; }
+.risk-score-med { color: #ffa500; }
+.risk-score-low { color: #00cc66; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0e0e0e; 
+}
+::-webkit-scrollbar-thumb {
+    background: #2d2e30; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #4b90ff; 
 }
