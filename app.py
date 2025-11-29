@@ -88,7 +88,6 @@ with st.sidebar:
 
     st.divider()
     
-    # --- Hidden Admin Access ---
     # --- Hidden Admin Access (God Mode) ---
     if st.session_state.get("admin_revealed", False):
         with st.expander("🔐 Admin Access", expanded=True):
@@ -257,55 +256,6 @@ if uploaded_file:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # --- Chat Interface ---
-        st.markdown("### 💬 Ask PolicyPARAKH")
-        
-        # Display History
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
-        
-        # Chat Input
-        if prompt := st.chat_input("Ask about a clause, or type 'Compare' to find better options..."):
-            
-            # --- God Mode Check ---
-            if prompt.strip() == "/godmode":
-                st.session_state.admin_revealed = True
-                st.toast("🔓 God Mode Enabled: Admin Access Revealed in Sidebar!")
-                time.sleep(1)
-                st.rerun()
-            
-            # User Message
-            # User Message
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            
-            # AI Response
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    # Simple Router for Demo
-                    response = ""
-                    if "compare" in prompt.lower():
-                        from agents.scout import ScoutAgent
-                        scout = ScoutAgent()
-                        response = scout.compare_policies("Current Policy", memory.get_profile_string())
-                    elif "genesis" in prompt.lower():
-                        from agents.genesis import GenesisAgent
-                        gen = GenesisAgent()
-                        response = gen.solve_problem(prompt)
-                    else:
-                        # Default to Gemini Chat
-                        from langchain_google_genai import ChatGoogleGenerativeAI
-                        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", google_api_key=security.get_next_api_key())
-                        # Inject Context
-                        context_prompt = f"Context: {st.session_state.policy_text[:5000]}\n\nUser Question: {prompt}"
-                        response = llm.invoke(context_prompt).content
-                    
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-
-# --- Courtroom Overlay ---
 # --- Courtroom Overlay ---
 if st.session_state.get("show_courtroom"):
     st.markdown("---")
@@ -390,3 +340,51 @@ if st.session_state.get("show_courtroom"):
                 st.session_state.show_courtroom = False
                 del st.session_state.interview_q
                 st.rerun()
+
+# --- Chat Interface (Always Visible) ---
+st.divider()
+st.markdown("### 💬 Ask PolicyPARAKH")
+
+# Display History
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# Chat Input
+if prompt := st.chat_input("Ask about a clause, or type 'Compare' to find better options..."):
+    
+    # --- God Mode Check ---
+    if prompt.strip() == "/godmode":
+        st.session_state.admin_revealed = True
+        st.toast("🔓 God Mode Enabled: Admin Access Revealed in Sidebar!")
+        time.sleep(1)
+        st.rerun()
+    
+    # User Message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # AI Response
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            # Simple Router for Demo
+            response = ""
+            if "compare" in prompt.lower():
+                from agents.scout import ScoutAgent
+                scout = ScoutAgent()
+                response = scout.compare_policies("Current Policy", memory.get_profile_string())
+            elif "genesis" in prompt.lower():
+                from agents.genesis import GenesisAgent
+                gen = GenesisAgent()
+                response = gen.solve_problem(prompt)
+            else:
+                # Default to Gemini Chat
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-exp", google_api_key=security.get_next_api_key())
+                # Inject Context
+                context_prompt = f"Context: {st.session_state.get('policy_text', 'No document uploaded yet.')[:5000]}\n\nUser Question: {prompt}"
+                response = llm.invoke(context_prompt).content
+            
+            st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
