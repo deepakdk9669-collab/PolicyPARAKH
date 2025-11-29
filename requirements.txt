@@ -1,8 +1,9 @@
 streamlit
-langchain
-langchain-google-genai
+langchain<0.3.0
+langchain-core<0.3.0
+langchain-google-genai<2.0.0
 langchain-groq
-langchain-community
+langchain-community<0.3.0
 duckduckgo-search
 plotly
 pandas
@@ -10,3 +11,4 @@ pypdf
 python-dotenv
 google-generativeai
 faiss-cpu
+pydantic<2.0.0
