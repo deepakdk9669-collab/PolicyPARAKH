@@ -1,7 +1,0 @@
-streamlit>=1.40.0
-google-genai>=0.4.0
-pypdf
-pandas
-tavily-python
-duckduckgo-search
-google-api-python-client
