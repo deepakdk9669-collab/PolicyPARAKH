@@ -1,0 +1,11 @@
+# https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#global-endpoint
+GOOGLE_CLOUD_LOCATION="global"
+
+# Set to 1 to use Vertex AI, or 0 to use Google AI Studio
+GOOGLE_GENAI_USE_VERTEXAI=1
+
+# Add your API Keys here
+GOOGLE_API_KEY="your_key_here"
+GROQ_API_KEY="your_key_here"
+SUPABASE_URL="your_url_here"
+SUPABASE_KEY="your_key_here"

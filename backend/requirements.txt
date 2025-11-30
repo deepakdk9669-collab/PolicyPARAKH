@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-dotenv
+pydantic
+google-genai>=1.0.0
+langchain-google-genai>=2.0.0
+langchain-community
+langchain-core
+langchain-groq
+duckduckgo-search
+plotly
+pandas
+supabase
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
