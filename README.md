@@ -1,12 +1,10 @@
 # 🛡️ PolicyPARAKH: The "Iron Man" Suit for Your Contracts
 
-
-
 > **"The AI that reads the fine print, fights the lawyer, and predicts the future—so you don't get scammed."**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-PolicyPARAKH_Cloud-FF4B4B?style=for-the-badge&logo=streamlit)](https://policyparakh.streamlit.app/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-PolicyPARAKH_Cloud-FF4B4B?style=for-the-badge&logo=vercel)](https://policyparakh.vercel.app/)
 [![Submission](https://img.shields.io/badge/Kaggle-Agents_Intensive_Capstone-20BEFF?style=for-the-badge&logo=kaggle)]()
-[![Architecture](https://img.shields.io/badge/Architecture-Hybrid_Agent_Swarm-blueviolet?style=for-the-badge)]()
+[![Architecture](https://img.shields.io/badge/Architecture-FastAPI_NextJS_Swarm-blueviolet?style=for-the-badge)]()
 
 ---
 
@@ -35,7 +33,6 @@ Rahul lost **₹5 Lakhs** because he didn't read Page 34, Paragraph 3, Line 2 of
 **"Contracts are designed to be signed, not read."**
 
 1.  **The "Non-Disclosure" Trap (Insurance):** 40% of health claims are rejected because users failed to understand a hidden clause.
-    *   *Example:* If your father smokes and you didn't declare it, the insurer can cancel the **entire policy** 10 years later.
 2.  **The "Security Deposit" Scam (Rent):** Landlords often hide clauses like *"Painting charges deductible"* or *"10% annual hike"* in page 15 of a lease.
 3.  **The "Bond" Trap (Jobs):** Freshers sign offer letters without realizing they are agreeing to a **₹2 Lakh Penalty** if they quit within 2 years.
 
@@ -61,7 +58,64 @@ This project is a direct application of the **Google & Kaggle AI Agents Intensiv
 | **Day 2** | **Tool Use** | We connected agents to **Tools**: `DuckDuckGo` for live laws/scams and `Plotly` for financial math. The agents autonomously decide when to call these tools. |
 | **Day 3** | **Reflexion & Reasoning** | We implemented a **Critic Agent**. The Auditor generates a report, and the Critic reviews it for hallucinations or missed clauses before showing it to the user. |
 | **Day 4** | **Memory & State** | We used **Session State** for the "Family Card" (Long-term context) and a **Knowledge Vault** for community-driven self-improvement. |
-| **Day 5** | **Deployment** | The system is deployed on **Streamlit Cloud** with a "Round-Robin API Key Rotation" mechanism to ensure 99.9% uptime. |
+| **Day 5** | **Deployment** | We evolved from a script to a **Full-Stack App** (FastAPI + Next.js), implementing "God Mode" controls and production-grade architecture. |
+
+---
+
+## 🏗️ System Architecture: The "Double-Vision" Design
+
+We utilize a **Modern Decoupled Architecture** (FastAPI + Next.js) to ensure scalability, speed, and a premium user experience.
+
+```mermaid
+graph TD
+    %% Styles
+    classDef user fill:#000,stroke:#fff,color:#fff,stroke-width:2px
+    classDef frontend fill:#1a237e,stroke:#fff,color:#fff,stroke-width:2px
+    classDef backend fill:#b71c1c,stroke:#fff,color:#fff,stroke-width:2px
+    classDef agent fill:#2C2C2E,stroke:#4F8BF9,color:#fff,stroke-width:2px
+    classDef external fill:#1E1F20,stroke:#00FF41,color:#fff,stroke-width:2px
+    classDef decision fill:#FFD700,stroke:#000,color:#000,stroke-width:2px,shape:diamond
+
+    subgraph "User Interaction Layer"
+        User(👤 User) --> |"Uploads Policy PDF"| UI[�️ Next.js Frontend]:::frontend
+        UI --> |"POST /audit"| API[� FastAPI Backend]:::backend
+    end
+
+    subgraph "The Agent Swarm (ADK Framework)"
+        API --> Router{🧠 Intent Router}:::decision
+        
+        %% Path 1: The Auditor
+        Router --> |"Audit Request"| Auditor[🔍 Auditor Agent]:::agent
+        Auditor --> |"Step 1: Ingestion"| PDF[📄 PDF Loader]:::agent
+        PDF --> |"Raw Text"| Splitter[✂️ Text Splitter]:::agent
+        Splitter --> |"Chunks"| VectorDB[(🗄️ Vector Store)]:::agent
+        VectorDB --> |"Retrieval"| Audit_LLM[⚡ Gemini 2.5 Flash]:::external
+        Audit_LLM --> |"Extracts Clauses"| Risk_Engine{⚠️ Risk Analyzer}:::decision
+        Risk_Engine --> |"High Risk"| Flag[🚩 Red Flag]:::agent
+        Risk_Engine --> |"Safe"| Pass[✅ Green Check]:::agent
+        
+        %% Path 2: The Courtroom
+        Router --> |"Dispute Simulation"| Court[⚖️ Courtroom Agent]:::agent
+        Court --> |"Case Context"| Judge[�‍⚖️ Judge (Gemini Pro)]:::external
+        Judge --> |"Starts Session"| Lawyer_A[🐺 Prosecution (Groq)]:::external
+        Judge --> |"Starts Session"| Lawyer_B[🛡️ Defense (Groq)]:::external
+        Lawyer_A <--> |"Debate Loop"| Lawyer_B
+        Lawyer_A & Lawyer_B --> |"Arguments"| Judge
+        Judge --> |"Final Verdict"| Verdict[📜 Judgment]:::agent
+
+        %% Path 3: The Sentinel
+        Router --> |"Background Check"| Sentinel[🕵️ Sentinel Agent]:::agent
+        Sentinel --> |"Query"| Search[🌐 DuckDuckGo]:::external
+        Search --> |"Results"| Sentiment{❤️ Sentiment Analysis}:::decision
+        Sentiment --> |"Negative"| Scam_Alert[� Scam Alert]:::agent
+    end
+
+    subgraph "Output Layer"
+        Flag & Pass & Verdict & Scam_Alert --> |"JSON Response"| API
+        API --> |"Real-time Stream"| UI
+        UI --> |"Visual Report"| User
+    end
+```
 
 ---
 
@@ -73,64 +127,26 @@ Think of PolicyPARAKH as a team of 5 elite experts sitting inside your computer,
 *   **Role:** The Forensic Accountant.
 *   **Power:** It reads every single word of your PDF in seconds using **Gemini 2.5 Flash**.
 *   **Mission:** It finds the "Red Flags" specific to your document type.
-    *   *Insurance:* Finds "Room Rent Capping", "Co-Pay", "Disease Sub-limits".
-    *   *Rent:* Finds "Lock-in Period", "Hidden Maintenance Charges".
-    *   *Job:* Finds "Notice Period Buyout", "Non-Compete Clauses".
 
 ### 2. 🕵️ The Sentinel Agent (The Detective)
 *   **Role:** The Private Investigator.
 *   **Power:** It bypasses the document and goes straight to the internet.
 *   **Mission:** "Trust, but Verify." It searches Reddit, Twitter, and Consumer Forums for *recent* scams or complaints about the company.
-    *   *Example:* "Star Health data leak 2024" or "Landlord disputes in Indiranagar".
 
 ### 3. ⚖️ The Lawyer Agent (The Fighter)
 *   **Role:** The Virtual Litigator.
 *   **Power:** It simulates a **Courtroom Drama** using **Groq (Llama 3)** for high-speed dialogue.
 *   **Mission:** It argues *against* the company to see if your contract holds up in court.
-    *   **Judge Dredd:** Presides over the case.
-    *   **Mr. Wolf (Prosecution):** Ruthless company lawyer citing clauses.
-    *   **Ms. Hope (Defense):** Your advocate finding loopholes.
 
 ### 4. 📉 The Architect Agent (The Time Traveler)
 *   **Role:** The Financial Futurist.
 *   **Power:** It uses **Plotly** to visualize the future.
 *   **Mission:** It calculates the "Real Value" of your money.
-    *   *Example:* "This ₹5 Lakh cover will only be worth ₹2.5 Lakhs in 10 years due to 7% medical inflation. You need to upgrade."
 
 ### 5. 🧬 The Genesis Agent (The Engineer)
 *   **Role:** The Tool Maker.
 *   **Power:** It can write its own Python code.
-*   **Mission:** If you ask a question the system doesn't know (e.g., "Is this hospital near me?"), it *writes a temporary script* to find the answer.
-    *   **BYOK (Bring Your Own Key):** If it needs a Weather API key, it asks you for it, learns the skill, and executes it.
-
----
-
-### 6. 🩺 The Medical Expert (Dr. Gemini)
-*   **Role:** The Chief Medical Officer.
-*   **Power:** Uses **Gemini 3.0 Pro** to analyze medical reports.
-*   **Mission:** Explains complex diagnosis terms and checks if your condition is excluded.
-    *   *Example:* "What is 'Phacoemulsification' and is it covered?"
-
----
-
-## 🎮 How to Use It? (Step-by-Step)
-
-**Step 1: Upload Your Document** 📄
-Drag and drop your **Insurance Policy**, **Rent Agreement**, or **Job Offer Letter**.
-
-**Step 2: Smart Routing** 🧠
-The **Advanced Router** analyzes your intent:
-*   *Need a deep dive?* -> It triggers the **Full Report** (Auditor).
-*   *Have a medical query?* -> It calls the **Medical Expert**.
-*   *Want to fight?* -> It opens the **Courtroom Simulator**.
-
-**Step 3: Get the Full Report** 📊
-Click "Full Report" in the tools menu for a comprehensive Markdown audit covering Red Flags, Financials, and Hidden Traps.
-
-**Step 4: Fight in Court** ⚖️
-Go to the "Courtroom Simulator" Gem in the sidebar.
-*   **Scenario:** "I need to claim for a heart attack."
-*   **Action:** Watch **Judge Dredd** and two AI Lawyers argue your case live!
+*   **Mission:** If you ask a question the system doesn't know, it *writes a temporary script* to find the answer.
 
 ---
 
@@ -141,13 +157,7 @@ We overhauled the entire interface to match the sleek, dark-themed aesthetic of 
 *   **Sidebar Gems:** Quick access to specific agents (Courtroom, Medical, Family).
 *   **Integrated Tools:** File uploads and report generation are neatly tucked into the chat interface.
 
-### 🔹 2. The Family Card (Contextual Memory)
-Instead of generic advice, you save a **Family Profile** once. The Agent "remembers" this via **LangChain Memory**.
-*   **User Input:** *"Save this: Mom (65, Joint Pain), Dad (Smoker), Self (25, Asthmatic)."*
-*   **Agent Action:** When you upload a policy, it cross-references YOUR family:
-    *   *"⚠️ **Alert for Mom:** Clause 4.1 excludes Joint Replacement for 4 years. Do not buy."*
-
-### 🔹 3. Cinematic Courtroom (Judge, Jury & Witnesses) 🎬
+### 🔹 2. Cinematic Courtroom (Judge, Jury & Witnesses) 🎬
 We gamified the legal process into a **Real-Time Drama**.
 *   **The Cast:**
     *   **Judge Dredd (AI):** Presides over the case.
@@ -155,131 +165,50 @@ We gamified the legal process into a **Real-Time Drama**.
     *   **Ms. Hope (Defense):** Your advocate.
 *   **The Experience:** The script plays out line-by-line with cinematic delays, creating high-stakes tension.
 
-### 🔹 4. Deep Memory (The Vault) 🧠
-The system never forgets.
-*   **Case History:** Every verdict, every argument, and every risk report is stored in the **Knowledge Vault**.
-
-### 🔹 5. "Bring Your Own Key" (BYOK) Protocol 🔐
-We respect user privacy and speed.
-*   **Freedom:** Users can plug in their own **Groq API Key** in the sidebar to unlock maximum speed for the Courtroom debate.
-
----
-
-## 🏗️ System Architecture: The "Double-Vision" Design
-
-### 🔭 View 1: The Macro Flow (User Journey)
-This is what the user experiences. It's a smart, routed path from Upload to Defense.
-
-```mermaid
-graph LR
-    %% Styles
-    classDef user fill:#000,stroke:#fff,color:#fff
-    classDef bot fill:#2C2C2E,stroke:#4F8BF9,color:#fff
-    classDef action fill:#1E1F20,stroke:#00FF41,color:#fff
-
-    User(👤 User) --> |Query/Upload| Router[🧠 Smart Router]:::bot
-    Router --> |"Audit"| Auditor[🔍 Auditor]:::action
-    Router --> |"Medical"| Medical[🩺 Medical Expert]:::action
-    Router --> |"Dispute"| Court[⚖️ Courtroom]:::action
-    Auditor & Medical --> Response(⚡ Unified Response)
-    Court --> Verdict(👨‍⚖️ Verdict)
-```
-
----
-
-### 🧠 Agent Roster (Who does what?)
-
-| Agent | Model | Role |
-| :--- | :--- | :--- |
-| **Auditor Agent** | Gemini 2.5 Pro | **Insurance Specialist.** Finds Co-pay, Capping. |
-| **Medical Expert** | Gemini 2.5 Pro | **Doctor AI.** Explains diagnosis & terms. |
-| **Tenant Guardian** | Gemini 2.5 Flash | **Real Estate Specialist.** Finds Lock-in, Eviction traps. |
-| **Career Shield** | Gemini 2.5 Flash | **Employment Specialist.** Finds Bonds, Non-Compete. |
-| **Genesis Agent** | Gemini 2.5 Pro | **The Engineer.** Writes Python code for unknown tasks. |
-| **The Lawyer** | Llama 3 (Groq) | **The Simulator.** Argues against you to test your case. |
-| **The Sentinel** | Gemini 2.5 Flash | **The Safety Net.** Checks for hallucinations & scams. |
-
----
-
-## 👨‍💻 Behind the Scenes (Code Logic)
-
-**The "Swarm" Coordinator (`app.py`)**
-The main app acts as the conductor. It doesn't do the work; it delegates.
-```python
-# When a file is uploaded...
-if uploaded_file:
-    # 1. Wake up the Auditor
-    auditor = AuditorAgent()
-    report = auditor.audit(text)
-    
-    # 2. Wake up the Sentinel
-    sentinel = SentinelAgent()
-    reputation = sentinel.check(company_name)
-    
-    # 3. Display results in Glass UI
-    render_dashboard(report, reputation)
-```
-
-**The "Persona" Injection (`agents/lawyer.py`)**
-We don't just ask for a summary; we inject a personality.
-```python
-# We inject "Persona" directly into the system prompt
-prompt = """
-You are Mr. Wolf, a ruthless company lawyer. 
-Your goal: Find ONE clause to reject this claim.
-Tone: Sarcastic, professional, cold.
-"""
-```
-
----
-
-## 🌟 Project Impact
-
-**PolicyPARAKH** addresses a critical gap in the fintech ecosystem: **Information Asymmetry.**
-
-While corporations utilize advanced data analytics and legal teams to minimize payouts, consumers have historically relied on intuition. By deploying an **Autonomous Swarm Architecture**, this project empowers the individual with an institutional-grade defense system.
-
-It transforms a static document into a **Dynamic Risk Assessment**, ensuring that financial products serve the user, not just the issuer. This is the future of **Consumer Protection AI**.
+### 🔹 3. "God Mode" Admin Panel 🔐
+A hidden dashboard for developers and power users.
+*   **Live Stats:** Monitor active agents and risk zones.
+*   **Manual Triggers:** Force-start specific agents (e.g., "Summon Courtroom").
+*   **Request Management:** Approve or deny agent actions manually.
 
 ---
 
 ## 🛠️ Technical Stack
 
-*   **LLM Backbone:**
+*   **Frontend:** Next.js 14 (React), Tailwind CSS, Material UI (MUI).
+*   **Backend:** FastAPI (Python), Pydantic.
+*   **AI Engine:**
     *   **Gemini 2.5 Flash:** Speed & Context (Auditor, Scout).
-    *   **Gemini 2.5 Pro:** Reasoning & Code Generation (Genesis).
+    *   **Gemini 3.0 Pro:** Reasoning & Code Generation (Genesis).
     *   **Groq (Llama 3 70B):** High-Speed Inference (Courtroom Simulator).
 *   **Orchestration:** **LangChain** (for Chains, Memory, and dynamic Tool construction).
-*   **Frontend:** Streamlit (UI) with **Frosted Glass CSS**.
 *   **Tools:** `DuckDuckGoSearchRun`, `Plotly`, `PythonREPL`.
-*   **Security:** Round-Robin API Key Rotation & **Owner-Only Execution Gates**.
 
 ---
 
 ## 👨‍💻 How to Run Locally
 
-1.  **Clone the Repo:**
-    ```bash
-    git clone https://github.com/yourusername/policyparakh.git
-    cd policyparakh
-    ```
+### **Option 1: One-Click Launch (Windows)**
+Simply double-click the `run_app.bat` file in the root directory.
 
-2.  **Install Dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+### **Option 2: Manual Setup**
 
-3.  **Set up Secrets:**
-    Create `.streamlit/secrets.toml` and add your API keys:
-    ```toml
-    GOOGLE_API_KEY = "your_key"
-    GROQ_API_KEY = "your_key"
-    ```
+**1. Backend Setup:**
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
-4.  **Run the App:**
-    ```bash
-    streamlit run app.py
-    ```
+**2. Frontend Setup:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**3. Access the App:**
+Open `http://localhost:3000` in your browser.
 
 ---
 *Built with ❤️ for the Kaggle AI Agents Intensive 2025.*
@@ -291,4 +220,3 @@ It transforms a static document into a **Dynamic Risk Assessment**, ensuring tha
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL v3) - see the [LICENSE](LICENSE) file for details.
 
 Copyright (c) 2025 Deepak Kushwah. All rights reserved.
-
