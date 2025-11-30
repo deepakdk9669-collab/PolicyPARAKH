@@ -1,300 +1,224 @@
-/* Gemini-Inspired Premium Theme - PolicyPARAKH */
+/* Gemini-Clone Theme for PolicyPARAKH */
 
-/* 1. Core Variables & Reset */
+/* 1. Core Variables */
 :root {
-    --bg-deep: #050505;
-    --bg-card: #121212;
-    --bg-hover: #1e1e1e;
-    --accent-primary: #4b90ff;
-    --accent-secondary: #ff5546;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-bg: rgba(18, 18, 18, 0.8);
+    --bg-app: #131314;
+    /* Gemini Dark BG */
+    --bg-sidebar: #1e1f20;
+    --bg-card: #1e1f20;
+    --bg-hover: #2a2b2d;
+    --text-primary: #e3e3e3;
+    --text-secondary: #a4a4a4;
+    --accent-blue: #a8c7fa;
+    --accent-gradient: linear-gradient(90deg, #4b90ff, #ff5546);
     --font-main: 'Inter', sans-serif;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
 }
 
-/* Main Background */
+/* 2. Global Reset */
 .stApp {
-    background-color: var(--bg-deep);
+    background-color: var(--bg-app);
     color: var(--text-primary);
     font-family: var(--font-main);
 }
 
-/* 2. Typography */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
+/* 3. Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: var(--bg-sidebar);
+    border-right: none;
+}
 
+section[data-testid="stSidebar"] .stButton button {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: none;
+    text-align: left;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s;
+    box-shadow: none;
+    font-weight: 500;
+}
+
+section[data-testid="stSidebar"] .stButton button:hover {
+    background-color: var(--bg-hover);
+    transform: none;
+    box-shadow: none;
+}
+
+/* New Chat Button Special Style */
+.new-chat-btn button {
+    background-color: #282a2c !important;
+    color: #e3e3e3 !important;
+    border-radius: 24px !important;
+    padding: 12px 20px !important;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.new-chat-btn button:hover {
+    background-color: #37393b !important;
+}
+
+/* 4. Main Chat Area */
+.stChatMessage {
+    background-color: transparent;
+    padding: 1.5rem 0;
+}
+
+div[data-testid="stChatMessageContent"] {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+div[data-testid="stChatMessageContent"][data-testid="user"] {
+    background-color: #282a2c;
+    /* User bubble */
+    padding: 12px 20px;
+    border-radius: 24px 24px 4px 24px;
+    display: inline-block;
+    max-width: 80%;
+}
+
+/* 5. Input Area & Tools */
+.stChatInputContainer {
+    padding-bottom: 20px;
+}
+
+.stChatInputContainer textarea {
+    background-color: #1e1f20;
+    border: 1px solid #444746;
+    border-radius: 24px;
+    color: white;
+    padding: 16px;
+}
+
+.stChatInputContainer textarea:focus {
+    border-color: var(--accent-blue);
+    box-shadow: none;
+}
+
+/* Tools Menu (Expander) */
+div[data-testid="stExpander"] {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+div[data-testid="stExpander"] details {
+    border: none;
+}
+
+div[data-testid="stExpander"] summary {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+div[data-testid="stExpander"] summary:hover {
+    color: var(--text-primary);
+}
+
+/* 6. Cards (Gems/Family) */
+.gem-card {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.gem-card:hover {
+    background-color: var(--bg-hover);
+    border-color: #444746;
+}
+
+.gem-title {
+    font-weight: 600;
+    font-size: 1.1em;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.gem-desc {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+/* 7. Typography */
 h1,
 h2,
 h3 {
     font-family: 'Outfit', sans-serif;
-    background: linear-gradient(90deg, #4b90ff, #ff5546);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
-
-/* 3. Sidebar Styling */
-section[data-testid="stSidebar"] {
-    background-color: #0a0a0a;
-    border-right: 1px solid var(--glass-border);
-}
-
-/* 4. Chat Interface */
-.stChatMessage {
-    background-color: transparent;
-    border: none;
-    padding: 1rem 0;
-}
-
-div[data-testid="stChatMessageContent"] {
-    background-color: var(--bg-card);
-    border-radius: 18px;
-    padding: 18px 24px;
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
-}
-
-div[data-testid="stChatMessageContent"]:hover {
-    transform: translateY(-2px);
-    border-color: rgba(75, 144, 255, 0.2);
-}
-
-div[data-testid="stChatMessageContent"][data-testid="user"] {
-    background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
-    border: 1px solid rgba(75, 144, 255, 0.3);
-}
-
-/* 5. Interactive Elements (Buttons & Inputs) */
-.stButton>button {
-    background: linear-gradient(135deg, #4b90ff 0%, #0055ff 100%);
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 12px 32px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(75, 144, 255, 0.3);
-}
-
-.stButton>button:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(75, 144, 255, 0.5);
-}
-
-.stTextInput>div>div>input,
-.stTextArea>div>div>textarea {
-    background-color: var(--bg-card);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: white;
-    padding: 14px;
-    transition: all 0.3s ease;
-}
-
-.stTextInput>div>div>input:focus,
-.stTextArea>div>div>textarea:focus {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(75, 144, 255, 0.2);
-    background-color: var(--bg-hover);
-}
-
-/* 6. Custom Components */
-
-/* Member Cards */
-.member-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    border-radius: 24px;
-    border: 1px solid var(--glass-border);
-    padding: 24px;
-    margin-bottom: 20px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.member-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.member-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(75, 144, 255, 0.4);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.member-card:hover::before {
-    opacity: 1;
-}
-
-.member-role {
-    font-size: 0.8em;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--accent-primary);
-    margin-bottom: 8px;
-    font-weight: 700;
-}
-
-.member-name {
-    font-size: 1.4em;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 8px;
-    font-family: 'Outfit', sans-serif;
-}
-
-/* Result Card */
-.result-card {
-    background: #131314;
-    border-radius: 24px;
-    border: 1px solid var(--glass-border);
-    padding: 28px;
-    margin-top: 20px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Status Indicators */
-.risk-score-high {
-    color: #ff4b4b;
-    text-shadow: 0 0 10px rgba(255, 75, 75, 0.3);
-}
-
-.risk-score-med {
-    color: #ffa500;
-    text-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
-}
-
-.risk-score-low {
-    color: #00cc66;
-    text-shadow: 0 0 10px rgba(0, 204, 102, 0.3);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg-deep);
-}
-
-::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary);
-}
-
-/* 7. Admin Panel - Action Cards */
-.request-card {
-    background: #1a1a1a;
-    border-left: 4px solid var(--accent-primary);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
-.request-card:hover {
-    background: #222;
-    transform: translateX(5px);
-}
-
-.request-meta {
-    font-size: 0.85em;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-}
-
-.request-msg {
-    font-size: 1.1em;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
-.status-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.8em;
+.glow-header {
+    background: linear-gradient(90deg, #4b90ff, #ff5546);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     font-weight: 700;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+/* 8. Admin Request Cards (Preserved) */
+.request-card {
+    background: #1e1f20;
+    border-left: 4px solid var(--accent-blue);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75em;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
 .status-pending {
-    background: rgba(255, 165, 0, 0.2);
+    background: rgba(255, 165, 0, 0.15);
     color: orange;
-    border: 1px solid orange;
 }
 
 .status-approved {
-    background: rgba(0, 204, 102, 0.2);
-    color: #00cc66;
-    border: 1px solid #00cc66;
+    background: rgba(0, 204, 102, 0.15);
+    color: #6dd58c;
 }
 
 .status-denied {
-    background: rgba(255, 75, 75, 0.2);
-    color: #ff4b4b;
-    border: 1px solid #ff4b4b;
+    background: rgba(255, 75, 75, 0.15);
+    color: #fa7b7b;
 }
 
-.status-blocked {
-    background: rgba(255, 75, 75, 0.1);
-    color: #ff4b4b;
-    border: 1px dashed #ff4b4b;
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* 8. Custom Header */
-.glow-header {
-    font-family: 'Outfit', sans-serif;
-    font-size: 3em;
-    font-weight: 800;
-    background: linear-gradient(to right, #4b90ff, #ff5546);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 30px rgba(75, 144, 255, 0.3);
-    margin-bottom: 0.5rem;
+::-webkit-scrollbar-track {
+    background: var(--bg-app);
 }
 
-.glow-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 1.2em;
-    color: var(--text-secondary);
-    margin-bottom: 2rem;
-    letter-spacing: 1px;
+::-webkit-scrollbar-thumb {
+    background: #444746;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5e5e5e;
 }
