@@ -5,21 +5,10 @@ from utils.security import SecurityManager
 
 class CourtroomAgent:
     def __init__(self):
-        self.security = SecurityManager()
-        api_key = self.security.get_next_api_key()
-        
         # Hybrid Brain Strategy: Use Flash Model for Speed
         from utils.ai_engine import AIEngine
         engine = AIEngine()
         self.llm = engine.get_flash_model()
-        
-        if not self.llm:
-            # Fallback if engine fails (Unlikely)
-            self.llm = ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
-                google_api_key=api_key,
-                temperature=0.7
-            )
 
     def conduct_interview(self, context: str) -> str:
         """

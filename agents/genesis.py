@@ -6,14 +6,9 @@ from utils.security import SecurityManager
 
 class GenesisAgent:
     def __init__(self):
-        self.security = SecurityManager()
-        api_key = self.security.get_next_api_key()
-        
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp", # Using Pro for better coding capability if available, else Flash
-            google_api_key=api_key,
-            temperature=0.4
-        )
+        from utils.ai_engine import AIEngine
+        engine = AIEngine()
+        self.llm = engine.get_genesis_model()
         self.genesis_tools = GenesisTools()
 
     def solve_problem(self, problem_statement: str) -> str:

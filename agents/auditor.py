@@ -9,15 +9,9 @@ from utils.knowledge_vault import KnowledgeVault
 
 class AuditorAgent:
     def __init__(self):
-        self.security = SecurityManager()
-        # Get a key (in a real app, we might want to rotate per request)
-        api_key = self.security.get_next_api_key()
-        
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp", # Using Flash for speed as requested
-            google_api_key=api_key,
-            temperature=0.1 # Low temp for factual extraction
-        )
+        from utils.ai_engine import AIEngine
+        engine = AIEngine()
+        self.llm = engine.get_flash_model()
 
     def audit_policy(self, policy_text: str, doc_type: str = "Insurance") -> dict:
         """

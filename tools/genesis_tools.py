@@ -87,6 +87,12 @@ class GenesisTools:
             
             allowed, token = self.security.check_permission_gate(f"Execute Code: {code[:50]}...")
             if not allowed:
+                # Log the blocked request for the Admin Panel
+                self.log_admin_request(
+                    tool="Python_REPL",
+                    status="BLOCKED",
+                    message=f"High Risk Code Blocked. Token: {token}. Code: {code[:50]}..."
+                )
                 return f"⛔ ACTION BLOCKED: High Risk Code Detected. Admin Token: {token}. Please send this to Admin for approval."
         
         try:

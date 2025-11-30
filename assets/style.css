@@ -1,20 +1,33 @@
-/* Gemini-Inspired Theme - PolicyPARAKH */
+/* Gemini-Inspired Premium Theme - PolicyPARAKH */
 
-/* Main Background - Deep Space Dark */
+/* 1. Core Variables & Reset */
+:root {
+    --bg-deep: #050505;
+    --bg-card: #121212;
+    --bg-hover: #1e1e1e;
+    --accent-primary: #4b90ff;
+    --accent-secondary: #ff5546;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(18, 18, 18, 0.8);
+    --font-main: 'Inter', sans-serif;
+}
+
+/* Main Background */
 .stApp {
-    background-color: #0e0e0e;
-    color: #e3e3e3;
-    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-main);
 }
 
-/* Sidebar - Glassmorphism */
-section[data-testid="stSidebar"] {
-    background-color: #131314;
-    border-right: 1px solid #2d2e30;
-}
+/* 2. Typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
 
-/* Typography - Gradient Headers */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
+    font-family: 'Outfit', sans-serif;
     background: linear-gradient(90deg, #4b90ff, #ff5546);
     -webkit-background-clip: text;
     background-clip: text;
@@ -23,124 +36,265 @@ h1, h2, h3 {
     letter-spacing: -0.5px;
 }
 
-/* Chat Bubbles */
+/* 3. Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: #0a0a0a;
+    border-right: 1px solid var(--glass-border);
+}
+
+/* 4. Chat Interface */
 .stChatMessage {
     background-color: transparent;
     border: none;
+    padding: 1rem 0;
 }
 
 div[data-testid="stChatMessageContent"] {
-    background-color: #1e1f20;
-    border-radius: 16px;
-    padding: 16px 20px;
-    border: 1px solid #2d2e30;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-card);
+    border-radius: 18px;
+    padding: 18px 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+div[data-testid="stChatMessageContent"]:hover {
+    transform: translateY(-2px);
+    border-color: rgba(75, 144, 255, 0.2);
 }
 
 div[data-testid="stChatMessageContent"][data-testid="user"] {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    border: 1px solid #3e5871;
+    background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%);
+    border: 1px solid rgba(75, 144, 255, 0.3);
 }
 
-/* Buttons - Premium Gradient Pills */
+/* 5. Interactive Elements (Buttons & Inputs) */
 .stButton>button {
     background: linear-gradient(135deg, #4b90ff 0%, #0055ff 100%);
     color: white;
     border: none;
-    border-radius: 24px;
-    padding: 12px 28px;
+    border-radius: 30px;
+    padding: 12px 32px;
     font-weight: 600;
     letter-spacing: 0.5px;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(75, 144, 255, 0.3);
 }
 
 .stButton>button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(75, 144, 255, 0.5);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(75, 144, 255, 0.5);
 }
 
-/* Inputs - Clean & Modern */
 .stTextInput>div>div>input,
 .stTextArea>div>div>textarea {
-    background-color: #1e1f20;
-    border: 1px solid #2d2e30;
+    background-color: var(--bg-card);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
     color: white;
-    padding: 12px;
+    padding: 14px;
+    transition: all 0.3s ease;
 }
 
 .stTextInput>div>div>input:focus,
 .stTextArea>div>div>textarea:focus {
-    border-color: #4b90ff;
+    border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px rgba(75, 144, 255, 0.2);
+    background-color: var(--bg-hover);
 }
 
-/* Member Cards - Glassmorphism */
+/* 6. Custom Components */
+
+/* Member Cards */
 .member-card {
-    background: rgba(30, 31, 32, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 20px;
-    margin-bottom: 16px;
-    transition: transform 0.2s ease;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.member-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .member-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(75, 144, 255, 0.3);
+    border-color: rgba(75, 144, 255, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.member-card:hover::before {
+    opacity: 1;
 }
 
 .member-role {
-    font-size: 0.85em;
+    font-size: 0.8em;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #888;
+    letter-spacing: 1.5px;
+    color: var(--accent-primary);
     margin-bottom: 8px;
+    font-weight: 700;
 }
 
 .member-name {
-    font-size: 1.2em;
+    font-size: 1.4em;
     font-weight: 600;
     color: #fff;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    font-family: 'Outfit', sans-serif;
 }
 
-.member-stats {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 12px;
-    font-size: 0.9em;
-    color: #ccc;
-}
-
-/* Result Card - The "Dashboard" in Chat */
+/* Result Card */
 .result-card {
     background: #131314;
     border-radius: 24px;
-    border: 1px solid #2d2e30;
-    padding: 24px;
-    margin-top: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid var(--glass-border);
+    padding: 28px;
+    margin-top: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.5s ease-out;
 }
 
-.risk-score-high { color: #ff4b4b; }
-.risk-score-med { color: #ffa500; }
-.risk-score-low { color: #00cc66; }
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 
-/* Custom Scrollbar */
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Status Indicators */
+.risk-score-high {
+    color: #ff4b4b;
+    text-shadow: 0 0 10px rgba(255, 75, 75, 0.3);
+}
+
+.risk-score-med {
+    color: #ffa500;
+    text-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+}
+
+.risk-score-low {
+    color: #00cc66;
+    text-shadow: 0 0 10px rgba(0, 204, 102, 0.3);
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-    background: #0e0e0e; 
+    background: var(--bg-deep);
 }
+
 ::-webkit-scrollbar-thumb {
-    background: #2d2e30; 
-    border-radius: 4px;
+    background: #333;
+    border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-    background: #4b90ff; 
+    background: var(--accent-primary);
+}
+
+/* 7. Admin Panel - Action Cards */
+.request-card {
+    background: #1a1a1a;
+    border-left: 4px solid var(--accent-primary);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.request-card:hover {
+    background: #222;
+    transform: translateX(5px);
+}
+
+.request-meta {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.request-msg {
+    font-size: 1.1em;
+    color: #fff;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: rgba(255, 165, 0, 0.2);
+    color: orange;
+    border: 1px solid orange;
+}
+
+.status-approved {
+    background: rgba(0, 204, 102, 0.2);
+    color: #00cc66;
+    border: 1px solid #00cc66;
+}
+
+.status-denied {
+    background: rgba(255, 75, 75, 0.2);
+    color: #ff4b4b;
+    border: 1px solid #ff4b4b;
+}
+
+.status-blocked {
+    background: rgba(255, 75, 75, 0.1);
+    color: #ff4b4b;
+    border: 1px dashed #ff4b4b;
+}
+
+/* 8. Custom Header */
+.glow-header {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3em;
+    font-weight: 800;
+    background: linear-gradient(to right, #4b90ff, #ff5546);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(75, 144, 255, 0.3);
+    margin-bottom: 0.5rem;
+}
+
+.glow-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2em;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
 }
