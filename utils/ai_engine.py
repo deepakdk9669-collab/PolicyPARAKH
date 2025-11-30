@@ -12,14 +12,14 @@ class AIEngine:
     def get_genesis_model(self):
         """
         Returns the 'Genesis' Brain (Reasoning & Knowledge).
-        Model: gemini-3-pro-preview (Best for reasoning & coding).
+        Model: gemini-2.5-pro (Best for reasoning & coding).
         Capabilities: Google Search Grounding enabled.
         """
         try:
             # CRITICAL SETTING: Enable Google Search Grounding
             # This allows the model to fetch "Today's" data.
             llm = ChatGoogleGenerativeAI(
-                model="gemini-3-pro-preview",
+                model="gemini-2.5-pro",
                 google_api_key=self.security.get_next_api_key(),
                 temperature=0.2,
                 # tools=[{"google_search": {}}] # Native Grounding Support
@@ -120,23 +120,27 @@ class AIEngine:
             
         sys_prompt = """
         You are the Master Router. Analyze the user's query and select the best expert agents.
-        Return a comma-separated list of agent names from: [AUDITOR, MEDICAL, LAWYER, ARCHITECT, GENESIS].
+        Return a comma-separated list of agent names from: [AUDITOR, MEDICAL, LAWYER, ARCHITECT, TENANT, CAREER, SCOUT, SENTINEL, GENESIS].
         
         Rules:
-        - AUDITOR: For policy checks, coverage questions, exclusions.
-        - MEDICAL: For medical terms, diagnosis explanation, health questions.
-        - LAWYER: For disputes, legal action, fighting claims.
-        - ARCHITECT: For financial forecasting, inflation, future costs.
-        - GENESIS: For general chat, greetings, or if no specific expert is needed.
+        - AUDITOR: Insurance policy checks, coverage questions.
+        - MEDICAL: Medical terms, diagnosis explanation.
+        - LAWYER: Disputes, legal action, fighting claims.
+        - ARCHITECT: Financial forecasting, inflation, future costs.
+        - TENANT: Rent agreements, landlord disputes, security deposit.
+        - CAREER: Job offer letters, bonds, non-compete clauses.
+        - SCOUT: Finding better policies, market comparison.
+        - SENTINEL: Company reputation, scams, news check.
+        - GENESIS: General chat, greetings, or if no specific expert is needed.
         
-        Example: "Check my policy for heart attack coverage and explain what Angioplasty is." -> "AUDITOR, MEDICAL"
+        Example: "Check this rent agreement and see if the landlord is a scammer." -> "TENANT, SENTINEL"
         """
         
         try:
             response = model.invoke(f"{sys_prompt}\nUser Query: {prompt}").content.strip().upper()
             agents = [a.strip() for a in response.split(",")]
             # Fallback if empty or invalid
-            valid_agents = {"AUDITOR", "MEDICAL", "LAWYER", "ARCHITECT", "GENESIS"}
+            valid_agents = {"AUDITOR", "MEDICAL", "LAWYER", "ARCHITECT", "TENANT", "CAREER", "SCOUT", "SENTINEL", "GENESIS"}
             final_list = [a for a in agents if a in valid_agents]
             return final_list if final_list else ["GENESIS"]
         except:

@@ -191,8 +191,8 @@ graph LR
 
 | Agent | Model | Role |
 | :--- | :--- | :--- |
-| **Auditor Agent** | Gemini 3.0 Pro | **Insurance Specialist.** Finds Co-pay, Capping. |
-| **Medical Expert** | Gemini 3.0 Pro | **Doctor AI.** Explains diagnosis & terms. |
+| **Auditor Agent** | Gemini 2.5 Pro | **Insurance Specialist.** Finds Co-pay, Capping. |
+| **Medical Expert** | Gemini 2.5 Pro | **Doctor AI.** Explains diagnosis & terms. |
 | **Tenant Guardian** | Gemini 2.5 Flash | **Real Estate Specialist.** Finds Lock-in, Eviction traps. |
 | **Career Shield** | Gemini 2.5 Flash | **Employment Specialist.** Finds Bonds, Non-Compete. |
 | **Genesis Agent** | Gemini 2.5 Pro | **The Engineer.** Writes Python code for unknown tasks. |

@@ -151,8 +151,14 @@ if st.session_state.current_view == "Chat":
             with st.chat_message("assistant"):
                 with st.spinner("Orchestrating Agents..."):
                     try:
-                        # 1. Smart Router (Multi-Agent)
-                        active_agents = engine.smart_router(prompt)
+                        # 0. Check for Manual Triggers
+                        if st.session_state.get("trigger_report"):
+                             st.session_state.trigger_report = False
+                             prompt = "Generate Full Report" # Override prompt
+                             active_agents = ["AUDITOR"]
+                        else:
+                            # 1. Smart Router (Multi-Agent)
+                            active_agents = engine.smart_router(prompt)
                         
                         # Display active agents
                         if len(active_agents) > 1:
@@ -163,15 +169,33 @@ if st.session_state.current_view == "Chat":
                         
                         # A. AUDITOR (Policy Analysis)
                         if "AUDITOR" in active_agents:
-                            with st.status("🛡️ Auditor Agent Working...", expanded=False):
+                            with st.status("🛡️ Auditor Agent Working...", expanded=False) as status:
                                 from agents.auditor import AuditorAgent
+                                from agents.critic import CriticAgent
+                                
                                 auditor = AuditorAgent()
+                                critic = CriticAgent()
+                                
                                 # If asking for full report vs specific question
                                 if "report" in prompt.lower() or "audit" in prompt.lower():
+                                    status.write("🔍 Auditor: Analyzing Policy...")
                                     res = auditor.generate_full_report(st.session_state.get("policy_text", ""))
+                                    
+                                    # CRITIC REVIEW
+                                    status.write("🧐 Critic: Reviewing findings...")
+                                    review = critic.review_audit(st.session_state.get("policy_text", ""), res)
+                                    
+                                    if review.get("is_accurate"):
+                                        res += "\n\n> ✅ **Verified by Critic Agent**"
+                                    else:
+                                        res += f"\n\n> ⚠️ **Critic Alert:** {review.get('corrections', 'Potential inaccuracies found.')}"
+                                        if review.get("missing_clauses"):
+                                            res += f"\n> **Missing Clauses:** {', '.join(review['missing_clauses'])}"
                                 else:
                                     # Simple check
                                     res = engine.run_genesis_agent(f"As Policy Auditor, answer: {prompt}", context=st.session_state.get("policy_text", ""))
+                                
+                                status.update(label="🛡️ Audit Complete", state="complete", expanded=False)
                                 responses.append(res)
 
                         # B. MEDICAL (Health Expert)
@@ -181,8 +205,56 @@ if st.session_state.current_view == "Chat":
                                 med_expert = MedicalExpertAgent()
                                 res = med_expert.analyze_medical_report(prompt, st.session_state.get("policy_text", ""))
                                 responses.append(res)
+                        
+                        # C. TENANT (Rent Agreement)
+                        if "TENANT" in active_agents:
+                            with st.status("🏠 Tenant Guardian Auditing...", expanded=False):
+                                from agents.tenant_guardian import TenantGuardianAgent
+                                tenant_agent = TenantGuardianAgent()
+                                audit = tenant_agent.audit_rent_agreement(st.session_state.get("policy_text", ""))
+                                res = f"### 🏠 Rent Agreement Audit\n**Risk Score:** {audit.get('risk_score')}/100\n\n"
+                                res += f"- **Lock-in:** {audit.get('lock_in')}\n"
+                                res += f"- **Security Deposit:** {audit.get('security_deposit')}\n"
+                                res += f"- **Maintenance:** {audit.get('maintenance')}\n"
+                                res += f"\n**Verdict:** {audit.get('risk_reason')}"
+                                responses.append(res)
 
-                        # C. LAWYER (Dispute)
+                        # D. CAREER (Job Offer)
+                        if "CAREER" in active_agents:
+                            with st.status("💼 Career Shield Auditing...", expanded=False):
+                                from agents.career_shield import CareerShieldAgent
+                                career_agent = CareerShieldAgent()
+                                audit = career_agent.audit_offer_letter(st.session_state.get("policy_text", ""))
+                                res = f"### 💼 Job Offer Audit\n**Safety Score:** {audit.get('risk_score')}/100\n\n"
+                                res += f"- **Bond:** {audit.get('bond')}\n"
+                                res += f"- **Notice Period:** {audit.get('notice_period')}\n"
+                                res += f"- **Non-Compete:** {audit.get('non_compete')}\n"
+                                res += f"\n**Verdict:** {audit.get('risk_reason')}"
+                                responses.append(res)
+
+                        # E. SCOUT (Market Comparison)
+                        if "SCOUT" in active_agents:
+                            with st.status("🔭 Market Scout Searching...", expanded=False):
+                                from agents.scout import ScoutAgent
+                                scout = ScoutAgent()
+                                # Mock user profile for now, or use family memory
+                                res = scout.compare_policies("Current Policy", "Family of 3, Age 30")
+                                responses.append(res)
+
+                        # F. SENTINEL (Reputation Check)
+                        if "SENTINEL" in active_agents:
+                            with st.status("🕵️ Sentinel Patroling...", expanded=False):
+                                from agents.sentinel import SentinelAgent
+                                sentinel = SentinelAgent()
+                                # Extract company name from prompt or context
+                                company_name = "Insurance Company" # Placeholder, ideally extracted via AI
+                                if "star" in prompt.lower(): company_name = "Star Health"
+                                elif "hdfc" in prompt.lower(): company_name = "HDFC Ergo"
+                                
+                                res = sentinel.check_reputation(company_name)
+                                responses.append(f"### 🕵️ Sentinel Report for {company_name}\n{res}")
+
+                        # G. LAWYER (Dispute)
                         if "LAWYER" in active_agents:
                              st.toast("⚖️ Legal Dispute Detected", icon="👨‍⚖️")
                              cols = st.columns([3, 1])
@@ -192,12 +264,17 @@ if st.session_state.current_view == "Chat":
                                  st.rerun()
                              responses.append("I've prepared the Courtroom Simulator for your legal dispute. Please proceed there for a full trial simulation.")
 
-                        # D. ARCHITECT (Financials)
+                        # H. ARCHITECT (Financials)
                         if "ARCHITECT" in active_agents:
-                             # Placeholder for financial chart
-                             responses.append("📈 [Financial Forecasting Chart would appear here]")
+                             with st.status("📉 Architect Forecasting...", expanded=False):
+                                 from agents.architect import ArchitectAgent
+                                 architect = ArchitectAgent()
+                                 # Default cover 5L for demo
+                                 fig = architect.forecast_financials(500000)
+                                 st.plotly_chart(fig, use_container_width=True)
+                                 responses.append("📈 **Financial Forecast:** I've generated a chart showing the impact of medical inflation on your cover over the next 10 years.")
 
-                        # E. GENESIS (General Chat / Fallback)
+                        # I. GENESIS (General Chat / Fallback)
                         if "GENESIS" in active_agents or not responses:
                             res = engine.run_genesis_agent(
                                 prompt=prompt, 
