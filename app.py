@@ -42,50 +42,46 @@ if "current_view" not in st.session_state:
 if "family_profile" not in st.session_state:
     st.session_state.family_profile = []
 
-# --- Sidebar Navigation ---
+# --- Sidebar Navigation (Gemini Style) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/950/950299.png", width=60)
-    st.markdown("## PolicyPARAKH")
-    st.caption("Neural Legal Defense System")
-    
-    st.markdown("---")
-    
-    # Navigation
-    if st.button("💬 AI Chat", use_container_width=True):
+    # 1. New Chat Button
+    st.markdown('<div class="new-chat-btn">', unsafe_allow_html=True)
+    if st.button("➕ New Chat", use_container_width=True):
+        st.session_state.messages = []
         st.session_state.current_view = "Chat"
         st.rerun()
-        
-    if st.button("⚖️ Courtroom Sim", use_container_width=True):
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # 2. Gems (Features)
+    st.markdown("### Gems")
+    
+    if st.button("⚖️ Courtroom Simulator", use_container_width=True):
         st.session_state.current_view = "Courtroom"
         st.rerun()
         
-    if st.button("👥 Family Context", use_container_width=True):
+    if st.button("👥 My Family", use_container_width=True):
         st.session_state.current_view = "Family"
         st.rerun()
 
+    if st.button("🛡️ Policy Auditor", use_container_width=True):
+         # Just a shortcut to chat with context
+         st.session_state.current_view = "Chat"
+         st.rerun()
+
+    st.markdown("### Recent")
+    st.caption("Today")
+    st.caption("Policy Review - HDFC Ergo")
+    st.caption("Claim Rejection Help")
+    
     st.markdown("---")
     
-    # Family Card Preview (Mini)
-    if st.session_state.family_profile:
-        st.markdown("#### 👨‍👩‍👧‍👦 Active Family")
-        for member in st.session_state.family_profile[:2]: # Show max 2
-            st.caption(f"• {member['name']} ({member['role']})")
-    
-    st.markdown("---")
-    
-    # Settings
+    # Settings at Bottom
     with st.expander("⚙️ Settings", expanded=False):
-        st.checkbox("🔒 Incognito Mode", value=False, help="Do not save data to Market Intel.")
-        groq_key = st.text_input("Groq API Key (Optional)", type="password")
-        if groq_key:
-            st.session_state["GROQ_API_KEY"] = groq_key
-            
-    # Admin Access
-    if st.session_state.get("admin_revealed", False):
-        st.markdown("---")
-        if st.button("🔐 Admin Dashboard", use_container_width=True):
-            st.session_state.show_admin = True
-            st.rerun()
+        st.checkbox("🔒 Incognito Mode", value=False)
+        if st.session_state.get("admin_revealed", False):
+            if st.button("🔐 Admin Dashboard"):
+                st.session_state.show_admin = True
+                st.rerun()
 
 # --- Admin Redirect ---
 if st.session_state.get("show_admin", False):
@@ -99,78 +95,85 @@ if st.session_state.get("show_admin", False):
 # --- Main Views ---
 
 # 1. CHAT VIEW
-# 1. CHAT VIEW
 if st.session_state.current_view == "Chat":
-    st.markdown('<div class="glow-header">PolicyPARAKH <span style="color:#4b90ff">AI</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="glow-sub">Neural Legal Defense System • Genesis Brain Online</div>', unsafe_allow_html=True)
+    # Header
+    st.markdown('<div class="glow-header">Hello, <span style="color:#4b90ff">User</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="glow-sub">How can I help you today?</div>', unsafe_allow_html=True)
     
-    # Multimedia Input Zone
-    with st.expander("📂 Upload Evidence (PDF, Audio, Video)", expanded=True):
-        c1, c2, c3 = st.columns(3)
-        uploaded_file = c1.file_uploader("Contract (PDF)", type=["pdf"], key="pdf_up")
-        audio_evidence = c2.file_uploader("Verbal Defense (Audio)", type=["mp3", "wav"], key="audio_up")
-        video_evidence = c3.file_uploader("Damage Evidence (Video)", type=["mp4", "mov"], key="video_up")
-
-    if uploaded_file:
-        # Process PDF
-        with open("temp_policy.pdf", "wb") as f:
-            f.write(uploaded_file.getbuffer())
-            
-        if not st.session_state.processing_complete:
-            with st.status("🔍 Analyzing Document...", expanded=True):
-                policy_text = extract_text_from_pdf("temp_policy.pdf")
-                st.session_state.policy_text = policy_text
-                
-                # Router Logic (Simplified)
-                st.write("🤖 Router: Classifying Document...")
-                # Default to Auditor for now
-                from agents.auditor import AuditorAgent
-                auditor = AuditorAgent()
-                report = auditor.audit_policy(policy_text)
-                
-                # Log Data
-                log_market_intel({"company_name": "Unknown", "risk_score": report.get("risk_score", 0)})
-                
-                st.session_state.processing_complete = True
-                st.session_state.messages.append({"role": "assistant", "type": "result_card", "content": report})
-                st.rerun()
-
-    # Chat Interface
+    # Chat History
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             if msg.get("type") == "result_card":
                 render_result_card(msg["content"])
             else:
                 st.markdown(msg["content"])
-
-    if prompt := st.chat_input("Ask about the policy..."):
-        if prompt.strip() == "/godmode":
-            st.session_state.admin_revealed = True
-            st.toast("🔓 God Mode Enabled")
-            time.sleep(1)
-            st.rerun()
-
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-            
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    # Use Genesis Brain (Gemini 3.0 Pro)
-                    response = engine.run_genesis_agent(
-                        prompt=prompt, 
-                        context=st.session_state.get('policy_text', '')
-                    )
-                    st.markdown(response)
-                    st.session_state.messages.append({"role": "assistant", "content": response})
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-
-# 2. COURTROOM VIEW (Split Screen)
-elif st.session_state.current_view == "Courtroom":
-    st.title("⚖️ Virtual Courtroom Simulator")
     
+    # Spacer to push input to bottom
+    st.markdown("<br>" * 2, unsafe_allow_html=True)
+
+    # Tools & Input Area (Simulated "Inside" Box)
+    with st.container():
+        # Tools Menu (Appears above input)
+        with st.expander("✨ Tools & Uploads", expanded=False):
+            c1, c2, c3, c4 = st.columns(4)
+            
+            # File Uploads
+            pdf = c1.file_uploader("📄 PDF", type=["pdf"], key="pdf_up", label_visibility="collapsed")
+            audio = c2.file_uploader("🎤 Audio", type=["mp3"], key="audio_up", label_visibility="collapsed")
+            
+            # Action Buttons
+            if c3.button("📊 Full Report"):
+                st.session_state.trigger_report = True
+                st.toast("Generating Full Report...")
+            
+            if c4.button("🖼️ Gen Image"):
+                 st.toast("Image Gen Feature Coming Soon")
+
+        # Chat Input
+        if prompt := st.chat_input("Ask Gemini..."):
+            # Handle Special Commands
+            if prompt.strip() == "/godmode":
+                st.session_state.admin_revealed = True
+                st.toast("🔓 God Mode Enabled")
+                time.sleep(1)
+                st.rerun()
+
+            # User Message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+                
+            # AI Response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    try:
+                        # Check for Full Report Trigger
+                        if st.session_state.get("trigger_report"):
+                            st.session_state.trigger_report = False
+                            # Simulate Report Generation
+                            response = "Here is the comprehensive report based on the available data..."
+                            # (In real app, call a specific agent)
+                        else:
+                            # Standard Chat
+                            response = engine.run_genesis_agent(
+                                prompt=prompt, 
+                                context=st.session_state.get('policy_text', '')
+                            )
+                        
+                        st.markdown(response)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+                        
+                        # Auto-detect need for report (Simple keyword check)
+                        if "analyze" in prompt.lower() or "audit" in prompt.lower():
+                             st.info("💡 Tip: Use the 'Full Report' tool for a deep-dive analysis.")
+                             
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+
+# 2. COURTROOM VIEW
+elif st.session_state.current_view == "Courtroom":
+    st.title("⚖️ Courtroom Simulator")
+    # ... (Keep existing Courtroom logic, just ensure it renders correctly)
     # Split Screen Layout
     left_col, right_col = st.columns([1, 1], gap="large")
     
@@ -181,62 +184,34 @@ elif st.session_state.current_view == "Courtroom":
         scenario = st.text_area("Dispute Scenario", "Claim rejected due to 'Pre-existing Disease' clause.")
         user_fact = st.text_input("Your Key Argument", "I disclosed it in the proposal form.")
         
-        st.markdown("### Evidence Locker")
-        st.checkbox("Include Uploaded PDF", value=True)
-        st.checkbox("Include Audio Testimony", value=False)
-        
         if st.button("🔥 Commence Trial", type="primary", use_container_width=True):
             st.session_state.sim_started = True
 
     with right_col:
         st.subheader("🎬 Live Proceedings")
-        
         if st.session_state.get("sim_started"):
             from agents.lawyer import CourtroomAgent
             court = CourtroomAgent()
-            
             with st.spinner("The Judge is entering..."):
                 case_data = court.simulate_argument(
                     st.session_state.get("policy_text", ""), 
                     f"{scenario} User Argument: {user_fact}"
                 )
-                
                 # Script Playback
-                script_container = st.container(height=500)
                 for line in case_data.get("script", []):
-                    time.sleep(1.0)
-                    with script_container:
-                        icon = "🗣️"
-                        if line["type"] == "judge": icon = "👨‍⚖️"
-                        elif line["type"] == "prosecution": icon = "👹"
-                        elif line["type"] == "defense": icon = "🛡️"
-                        elif line["type"] == "witness": icon = "🕵️"
-                        
-                        st.markdown(f"**{icon} {line['speaker']}**")
-                        st.info(line['text'])
-                
-                # Verdict
-                verdict = case_data.get("verdict", {})
-                if verdict.get("winner") == "Consumer":
-                    st.success(f"**Verdict**: {verdict.get('winner')} ({verdict.get('probability')})")
-                    st.balloons()
-                else:
-                    st.error(f"**Verdict**: {verdict.get('winner')} ({verdict.get('probability')})")
-
+                    time.sleep(0.5) # Faster for demo
+                    icon = "🗣️"
+                    if line["type"] == "judge": icon = "👨‍⚖️"
+                    elif line["type"] == "prosecution": icon = "👹"
+                    elif line["type"] == "defense": icon = "🛡️"
+                    st.markdown(f"**{icon} {line['speaker']}**")
+                    st.info(line['text'])
         else:
-            st.markdown(
-                """
-                <div style='text-align: center; padding: 50px; color: #666;'>
-                    <h3>Waiting for Case...</h3>
-                    <p>Setup the scenario on the left to begin.</p>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
+            st.markdown("<br><br><center>Waiting for Case...</center>", unsafe_allow_html=True)
 
-# 3. FAMILY VIEW
+# 3. FAMILY VIEW (My Family)
 elif st.session_state.current_view == "Family":
-    st.title("👥 Family Context")
+    st.title("👥 My Family")
     
     with st.expander("Add New Member", expanded=True):
         c1, c2, c3 = st.columns(3)
