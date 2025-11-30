@@ -105,23 +105,30 @@ Think of PolicyPARAKH as a team of 5 elite experts sitting inside your computer,
 
 ---
 
+### 6. 🩺 The Medical Expert (Dr. Gemini)
+*   **Role:** The Chief Medical Officer.
+*   **Power:** Uses **Gemini 3.0 Pro** to analyze medical reports.
+*   **Mission:** Explains complex diagnosis terms and checks if your condition is excluded.
+    *   *Example:* "What is 'Phacoemulsification' and is it covered?"
+
+---
+
 ## 🎮 How to Use It? (Step-by-Step)
 
 **Step 1: Upload Your Document** 📄
 Drag and drop your **Insurance Policy**, **Rent Agreement**, or **Job Offer Letter**.
 
-**Step 2: Watch the Magic** ✨
-The system automatically detects the document type:
-*   *Is it a Rent Agreement?* -> The **Tenant Guardian** wakes up.
-*   *Is it a Job Offer?* -> The **Career Shield** wakes up.
+**Step 2: Smart Routing** 🧠
+The **Advanced Router** analyzes your intent:
+*   *Need a deep dive?* -> It triggers the **Full Report** (Auditor).
+*   *Have a medical query?* -> It calls the **Medical Expert**.
+*   *Want to fight?* -> It opens the **Courtroom Simulator**.
 
-**Step 3: Get the Report** 📊
-You get a simple **Risk Score (0-100)**.
-*   *0-30:* Safe.
-*   *70-100:* **DANGER!** Do not sign.
+**Step 3: Get the Full Report** 📊
+Click "Full Report" in the tools menu for a comprehensive Markdown audit covering Red Flags, Financials, and Hidden Traps.
 
 **Step 4: Fight in Court** ⚖️
-Go to the "Virtual Courtroom" in the sidebar.
+Go to the "Courtroom Simulator" Gem in the sidebar.
 *   **Scenario:** "I need to claim for a heart attack."
 *   **Action:** Watch **Judge Dredd** and two AI Lawyers argue your case live!
 
@@ -129,45 +136,39 @@ Go to the "Virtual Courtroom" in the sidebar.
 
 ## 🌟 Key Features ("God Mode")
 
-### 🔹 1. The Family Card (Contextual Memory)
+### 🔹 1. Gemini UI Clone (Premium Experience)
+We overhauled the entire interface to match the sleek, dark-themed aesthetic of Google's Gemini.
+*   **Sidebar Gems:** Quick access to specific agents (Courtroom, Medical, Family).
+*   **Integrated Tools:** File uploads and report generation are neatly tucked into the chat interface.
+
+### 🔹 2. The Family Card (Contextual Memory)
 Instead of generic advice, you save a **Family Profile** once. The Agent "remembers" this via **LangChain Memory**.
 *   **User Input:** *"Save this: Mom (65, Joint Pain), Dad (Smoker), Self (25, Asthmatic)."*
 *   **Agent Action:** When you upload a policy, it cross-references YOUR family:
     *   *"⚠️ **Alert for Mom:** Clause 4.1 excludes Joint Replacement for 4 years. Do not buy."*
 
-### 🔹 2. Cinematic Courtroom (Judge, Jury & Witnesses) 🎬
+### 🔹 3. Cinematic Courtroom (Judge, Jury & Witnesses) 🎬
 We gamified the legal process into a **Real-Time Drama**.
 *   **The Cast:**
     *   **Judge Dredd (AI):** Presides over the case.
     *   **Mr. Wolf (Prosecution):** Ruthless company lawyer.
     *   **Ms. Hope (Defense):** Your advocate.
-    *   **The Witnesses:** The **Architect Agent** (Time Traveler) and **Sentinel Agent** (Detective) are called to the stand to provide evidence.
 *   **The Experience:** The script plays out line-by-line with cinematic delays, creating high-stakes tension.
 
-### 🔹 3. Deep Memory (The Vault) 🧠
+### 🔹 4. Deep Memory (The Vault) 🧠
 The system never forgets.
 *   **Case History:** Every verdict, every argument, and every risk report is stored in the **Knowledge Vault**.
-*   **Evolution:** If you win a case against "Star Health" today, the system remembers that argument for your next uploaded policy.
 
-### 🔹 4. "Bring Your Own Key" (BYOK) Protocol 🔐
+### 🔹 5. "Bring Your Own Key" (BYOK) Protocol 🔐
 We respect user privacy and speed.
 *   **Freedom:** Users can plug in their own **Groq API Key** in the sidebar to unlock maximum speed for the Courtroom debate.
-
-### � 5. The "Self-Evolving" Genesis Engine (BYOK + Vote) 🗳️
-The system is not static; it evolves based on user needs.
-*   **Scenario:** User asks for "Live Flood Risk" (requires Weather API).
-*   **The Block:** System realizes it lacks the API key.
-*   **The Offer:** *"I lack the Weather Key. Enter YOUR key for this session, or Vote for me to add it."*
-*   **The Feedback Loop:** If 5 users provide a key, the Admin gets a notification to buy a permanent key. **The system grows with the community.**
 
 ---
 
 ## 🏗️ System Architecture: The "Double-Vision" Design
 
-To understand PolicyPARAKH, you need to see it at two levels: The **Macro Flow** (User Journey) and the **Micro Swarm** (Agent Interaction).
-
 ### 🔭 View 1: The Macro Flow (User Journey)
-This is what the user experiences. It's a simple, linear path from Upload to Defense.
+This is what the user experiences. It's a smart, routed path from Upload to Defense.
 
 ```mermaid
 graph LR
@@ -176,57 +177,22 @@ graph LR
     classDef bot fill:#2C2C2E,stroke:#4F8BF9,color:#fff
     classDef action fill:#1E1F20,stroke:#00FF41,color:#fff
 
-    User(👤 User) --> |Upload PDF| Router[🚦 Universal Router]:::bot
-    Router --> |Classify| Swarm[🐝 Agent Swarm]:::action
-    Swarm --> |Analyze| Report[📄 Risk Report]:::bot
-    Report --> |Simulate| Court[⚖️ Virtual Courtroom]:::action
-    Court --> |Verdict| User
+    User(👤 User) --> |Query/Upload| Router[🧠 Smart Router]:::bot
+    Router --> |"Audit"| Auditor[🔍 Auditor]:::action
+    Router --> |"Medical"| Medical[🩺 Medical Expert]:::action
+    Router --> |"Dispute"| Court[⚖️ Courtroom]:::action
+    Auditor & Medical --> Response(⚡ Unified Response)
+    Court --> Verdict(👨‍⚖️ Verdict)
 ```
 
 ---
 
-### 🔬 View 2: The Neural Swarm (Under the Hood)
-This is where the magic happens. The **5-Layer Iron Dome** architecture ensures that every document is treated by a specialist, not a generalist.
-
-```mermaid
-graph TD
-    %% Styles
-    classDef router fill:#FF4B4B,stroke:#fff,color:#fff
-    classDef specialist fill:#00CC66,stroke:#fff,color:#fff
-    classDef experience fill:#2C2C2E,stroke:#4F8BF9,color:#fff
-    classDef safety fill:#450a0a,stroke:#EF4444,color:#fff
-
-    Input(📄 User Upload) --> Router{🚦 Layer 1: Universal Router}:::router
-
-    subgraph "Layer 2: The Specialist Swarm"
-        Router -- "Insurance" --> Auditor[🔍 Auditor Agent]:::specialist
-        Router -- "Rent" --> Tenant[🏠 Tenant Guardian]:::specialist
-        Router -- "Job" --> Career[💼 Career Shield]:::specialist
-    end
-
-    subgraph "Layer 3: The Experience Swarm"
-        Auditor & Tenant & Career --> Architect["Architect Agent (Plotly)"]:::experience
-        Auditor & Tenant & Career --> Lawyer["⚖️ Lawyer Persona (Llama 3)"]:::experience
-        Auditor & Tenant & Career --> Scout["🔭 Market Scout (Search)"]:::experience
-    end
-
-    subgraph "Layer 4: The Genesis Engine"
-        Router -- "Unknown Task?" --> Genesis[🧬 Genesis Agent]:::experience
-        Genesis -- "Draft Code" --> Critic{🧐 Code Critic}:::safety
-        Critic -- "Approved" --> Gate{🔒 Permission Gate}:::safety
-        Gate -- "Allowed" --> Tool[🛠️ New Python Tool]:::specialist
-    end
-
-    subgraph "Layer 5: The Iron Dome"
-        Architect & Lawyer & Scout & Tool --> Sentinel[🕵️ Sentinel Agent]:::safety
-        Sentinel --> Output(⚡ Final Response)
-    end
-```
 ### 🧠 Agent Roster (Who does what?)
 
 | Agent | Model | Role |
 | :--- | :--- | :--- |
-| **Auditor Agent** | Gemini 2.5 Flash | **Insurance Specialist.** Finds Co-pay, Capping. |
+| **Auditor Agent** | Gemini 3.0 Pro | **Insurance Specialist.** Finds Co-pay, Capping. |
+| **Medical Expert** | Gemini 3.0 Pro | **Doctor AI.** Explains diagnosis & terms. |
 | **Tenant Guardian** | Gemini 2.5 Flash | **Real Estate Specialist.** Finds Lock-in, Eviction traps. |
 | **Career Shield** | Gemini 2.5 Flash | **Employment Specialist.** Finds Bonds, Non-Compete. |
 | **Genesis Agent** | Gemini 2.5 Pro | **The Engineer.** Writes Python code for unknown tasks. |

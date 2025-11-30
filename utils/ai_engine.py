@@ -64,7 +64,80 @@ class AIEngine:
         User Question: {prompt}
         """
         
-        model = self.get_genesis_model()
-        if model:
-            return model.invoke(full_prompt).content
-        return "Error: AI Brain Offline."
+        # Try all available keys before giving up
+        max_retries = self.security.get_key_count()
+        
+        for _ in range(max_retries):
+            model = self.get_genesis_model()
+            if model:
+                try:
+                    return model.invoke(full_prompt).content
+                except Exception as e:
+                    err_str = str(e).lower()
+                    # Check for Rate Limit (429) or other transient errors
+                    if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                        # Key is automatically rotated by get_genesis_model -> get_next_api_key
+                        continue
+                    return f"Error: {str(e)}"
+        
+        # If all keys failed with 429, try Flash
+        st.toast("⚠️ All Genesis Keys Busy. Switching to Flash...", icon="⚡")
+        flash_model = self.get_flash_model()
+        if flash_model:
+            try:
+                return flash_model.invoke(full_prompt).content
+            except Exception as e:
+                return f"Flash Error: {str(e)}"
+                
+                return f"Error: AI Brain Offline (All Keys Exhausted)."
+
+    def classify_intent(self, prompt: str) -> str:
+        """
+        Classifies the user's intent into: AUDIT_REQUEST, COURTROOM_REQUEST, or GENERAL_QUERY.
+        Uses the fast 'Flash' model.
+        """
+        model = self.get_flash_model()
+        if not model:
+            return "GENERAL_QUERY"
+            
+        sys_prompt = """
+        Classify the user's query into exactly one of these categories:
+        1. AUDIT_REQUEST: User wants to analyze/check/audit a policy document or asks for a report.
+        2. COURTROOM_REQUEST: User wants to fight a case, simulate a trial, or has a legal dispute.
+        3. GENERAL_QUERY: Standard questions, greetings, or small talk.
+        
+        Output ONLY the category name.
+        """
+        
+    def smart_router(self, prompt: str) -> list:
+        """
+        Analyzes the prompt and returns a list of agents to activate.
+        Agents: AUDITOR, MEDICAL, LAWYER, ARCHITECT, GENESIS.
+        """
+        model = self.get_flash_model()
+        if not model:
+            return ["GENESIS"]
+            
+        sys_prompt = """
+        You are the Master Router. Analyze the user's query and select the best expert agents.
+        Return a comma-separated list of agent names from: [AUDITOR, MEDICAL, LAWYER, ARCHITECT, GENESIS].
+        
+        Rules:
+        - AUDITOR: For policy checks, coverage questions, exclusions.
+        - MEDICAL: For medical terms, diagnosis explanation, health questions.
+        - LAWYER: For disputes, legal action, fighting claims.
+        - ARCHITECT: For financial forecasting, inflation, future costs.
+        - GENESIS: For general chat, greetings, or if no specific expert is needed.
+        
+        Example: "Check my policy for heart attack coverage and explain what Angioplasty is." -> "AUDITOR, MEDICAL"
+        """
+        
+        try:
+            response = model.invoke(f"{sys_prompt}\nUser Query: {prompt}").content.strip().upper()
+            agents = [a.strip() for a in response.split(",")]
+            # Fallback if empty or invalid
+            valid_agents = {"AUDITOR", "MEDICAL", "LAWYER", "ARCHITECT", "GENESIS"}
+            final_list = [a for a in agents if a in valid_agents]
+            return final_list if final_list else ["GENESIS"]
+        except:
+            return ["GENESIS"]

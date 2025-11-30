@@ -36,11 +36,25 @@ class SecurityManager:
         
         return keys
 
+        if "key_index" not in st.session_state:
+            st.session_state.key_index = 0
+
+    def get_key_count(self) -> int:
+        return len(self.api_keys)
+
     def get_next_api_key(self) -> str:
-        """Round-robin or random selection of API key."""
+        """Round-robin selection of API key."""
         if not self.api_keys:
             raise ValueError("No API keys available.")
-        return random.choice(self.api_keys)
+        
+        # Get current key
+        idx = st.session_state.key_index % len(self.api_keys)
+        key = self.api_keys[idx]
+        
+        # Rotate for next call
+        st.session_state.key_index += 1
+        
+        return key
 
     def get_secret(self, key_name: str) -> Optional[str]:
         """

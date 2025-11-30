@@ -63,6 +63,10 @@ with st.sidebar:
         st.session_state.current_view = "Family"
         st.rerun()
 
+    if st.button("🩺 Medical Expert", use_container_width=True):
+        st.session_state.current_view = "Medical"
+        st.rerun()
+
     if st.button("🛡️ Policy Auditor", use_container_width=True):
          # Just a shortcut to chat with context
          st.session_state.current_view = "Chat"
@@ -145,27 +149,66 @@ if st.session_state.current_view == "Chat":
                 
             # AI Response
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
+                with st.spinner("Orchestrating Agents..."):
                     try:
-                        # Check for Full Report Trigger
-                        if st.session_state.get("trigger_report"):
-                            st.session_state.trigger_report = False
-                            # Simulate Report Generation
-                            response = "Here is the comprehensive report based on the available data..."
-                            # (In real app, call a specific agent)
-                        else:
-                            # Standard Chat
-                            response = engine.run_genesis_agent(
+                        # 1. Smart Router (Multi-Agent)
+                        active_agents = engine.smart_router(prompt)
+                        
+                        # Display active agents
+                        if len(active_agents) > 1:
+                            st.caption(f"⚡ Activated Agents: {', '.join(active_agents)}")
+                        
+                        # 2. Execute Agents
+                        responses = []
+                        
+                        # A. AUDITOR (Policy Analysis)
+                        if "AUDITOR" in active_agents:
+                            with st.status("🛡️ Auditor Agent Working...", expanded=False):
+                                from agents.auditor import AuditorAgent
+                                auditor = AuditorAgent()
+                                # If asking for full report vs specific question
+                                if "report" in prompt.lower() or "audit" in prompt.lower():
+                                    res = auditor.generate_full_report(st.session_state.get("policy_text", ""))
+                                else:
+                                    # Simple check
+                                    res = engine.run_genesis_agent(f"As Policy Auditor, answer: {prompt}", context=st.session_state.get("policy_text", ""))
+                                responses.append(res)
+
+                        # B. MEDICAL (Health Expert)
+                        if "MEDICAL" in active_agents:
+                            with st.status("🩺 Medical Expert Analyzing...", expanded=False):
+                                from agents.medical_expert import MedicalExpertAgent
+                                med_expert = MedicalExpertAgent()
+                                res = med_expert.analyze_medical_report(prompt, st.session_state.get("policy_text", ""))
+                                responses.append(res)
+
+                        # C. LAWYER (Dispute)
+                        if "LAWYER" in active_agents:
+                             st.toast("⚖️ Legal Dispute Detected", icon="👨‍⚖️")
+                             cols = st.columns([3, 1])
+                             cols[0].info("This requires a legal strategy session.")
+                             if cols[1].button("Open Courtroom"):
+                                 st.session_state.current_view = "Courtroom"
+                                 st.rerun()
+                             responses.append("I've prepared the Courtroom Simulator for your legal dispute. Please proceed there for a full trial simulation.")
+
+                        # D. ARCHITECT (Financials)
+                        if "ARCHITECT" in active_agents:
+                             # Placeholder for financial chart
+                             responses.append("📈 [Financial Forecasting Chart would appear here]")
+
+                        # E. GENESIS (General Chat / Fallback)
+                        if "GENESIS" in active_agents or not responses:
+                            res = engine.run_genesis_agent(
                                 prompt=prompt, 
                                 context=st.session_state.get('policy_text', '')
                             )
+                            responses.append(res)
                         
-                        st.markdown(response)
-                        st.session_state.messages.append({"role": "assistant", "content": response})
-                        
-                        # Auto-detect need for report (Simple keyword check)
-                        if "analyze" in prompt.lower() or "audit" in prompt.lower():
-                             st.info("💡 Tip: Use the 'Full Report' tool for a deep-dive analysis.")
+                        # 3. Combine & Display Responses
+                        final_response = "\n\n---\n\n".join(responses)
+                        st.markdown(final_response)
+                        st.session_state.messages.append({"role": "assistant", "content": final_response})
                              
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
@@ -236,3 +279,36 @@ elif st.session_state.current_view == "Family":
                 render_member_card(member)
     else:
         st.info("No family members added yet.")
+
+# 4. MEDICAL EXPERT VIEW
+elif st.session_state.current_view == "Medical":
+    st.title("🩺 Medical Expert")
+    st.caption("Dr. Gemini - Your Personal Medical Claims Assistant")
+    
+    with st.container():
+        c1, c2 = st.columns([2, 1])
+        
+        with c1:
+            st.subheader("Analyze Medical Report")
+            report_text = st.text_area("Paste Report / Diagnosis Text", height=200, placeholder="e.g. Patient diagnosed with Grade 2 Cataract...")
+            
+            if st.button("🔍 Analyze Report", type="primary"):
+                if report_text:
+                    from agents.medical_expert import MedicalExpertAgent
+                    expert = MedicalExpertAgent()
+                    with st.spinner("Dr. Gemini is analyzing..."):
+                        analysis = expert.analyze_medical_report(report_text, st.session_state.get("policy_text", ""))
+                        st.markdown(analysis)
+                else:
+                    st.warning("Please enter some text to analyze.")
+                    
+        with c2:
+            st.subheader("Explain Term")
+            term = st.text_input("Enter Medical Term", placeholder="e.g. Angioplasty")
+            if st.button("Explain"):
+                if term:
+                    from agents.medical_expert import MedicalExpertAgent
+                    expert = MedicalExpertAgent()
+                    with st.spinner("Consulting dictionary..."):
+                        explanation = expert.explain_term(term)
+                        st.info(explanation)

@@ -100,8 +100,48 @@ class AuditorAgent:
                     "waiting_periods": "Unknown",
                     "sub_limits": "Unknown"
                 }
-        except Exception as e:
-            return {
-                "error": f"Audit failed: {str(e)}",
-                "risk_score": 0
             }
+
+    def generate_full_report(self, policy_text: str) -> str:
+        """
+        Generates a comprehensive Markdown report using the Genesis Brain.
+        """
+        from utils.ai_engine import AIEngine
+        engine = AIEngine()
+        
+        prompt = f"""
+        You are the **Chief Policy Auditor**.
+        Conduct a deep-dive forensic analysis of the following insurance policy document.
+        
+        Generate a **Comprehensive Markdown Report** with the following sections:
+        
+        # 🛡️ Policy Audit Report
+        
+        ## 1. Executive Summary
+        - Brief overview of the policy type and key coverage.
+        - **Overall Risk Rating**: (Low/Medium/High) with a short justification.
+        
+        ## 2. Critical Red Flags 🚩
+        - List the top 3-5 most dangerous clauses that could lead to claim rejection.
+        - Explain *why* they are dangerous in simple terms.
+        
+        ## 3. Financial Analysis 💰
+        - **Room Rent Capping**: Detail any limits.
+        - **Co-Payment**: Is there a mandatory co-pay?
+        - **Sub-limits**: Check for disease-specific limits (Cataract, Knee Replacement, etc.).
+        
+        ## 4. Hidden Traps & Exclusions 🕸️
+        - Identify obscure exclusions often missed by users.
+        - Highlight "Reasonable and Customary" clauses if present.
+        
+        ## 5. Recommendations 💡
+        - Actionable advice for the policyholder.
+        - Questions to ask the insurer.
+        
+        ---
+        **Policy Text**:
+        {policy_text[:15000]}
+        """
+        
+        # Use Genesis Agent (Robust with Retry)
+        return engine.run_genesis_agent(prompt, context="")

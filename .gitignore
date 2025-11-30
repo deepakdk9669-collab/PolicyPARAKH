@@ -1,0 +1,14 @@
+# Streamlit
+.streamlit/secrets.toml
+.streamlit/
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# Temp files
+temp_policy.pdf
+*.pdf
