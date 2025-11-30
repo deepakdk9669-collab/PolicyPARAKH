@@ -77,37 +77,37 @@ graph TD
     classDef decision fill:#FFD700,stroke:#000,color:#000,stroke-width:2px,shape:diamond
 
     subgraph "User Interaction Layer"
-        User(👤 User) --> |"Uploads Policy PDF"| UI[�️ Next.js Frontend]:::frontend
-        UI --> |"POST /audit"| API[� FastAPI Backend]:::backend
+        User("👤 User") --> |"Uploads Policy PDF"| UI["🖥️ Next.js Frontend"]:::frontend
+        UI --> |"POST /audit"| API["🔥 FastAPI Backend"]:::backend
     end
 
     subgraph "The Agent Swarm (ADK Framework)"
-        API --> Router{🧠 Intent Router}:::decision
+        API --> Router{"🧠 Intent Router"}:::decision
         
         %% Path 1: The Auditor
-        Router --> |"Audit Request"| Auditor[🔍 Auditor Agent]:::agent
-        Auditor --> |"Step 1: Ingestion"| PDF[📄 PDF Loader]:::agent
-        PDF --> |"Raw Text"| Splitter[✂️ Text Splitter]:::agent
-        Splitter --> |"Chunks"| VectorDB[(🗄️ Vector Store)]:::agent
-        VectorDB --> |"Retrieval"| Audit_LLM[⚡ Gemini 2.5 Flash]:::external
-        Audit_LLM --> |"Extracts Clauses"| Risk_Engine{⚠️ Risk Analyzer}:::decision
-        Risk_Engine --> |"High Risk"| Flag[🚩 Red Flag]:::agent
-        Risk_Engine --> |"Safe"| Pass[✅ Green Check]:::agent
+        Router --> |"Audit Request"| Auditor["🔍 Auditor Agent"]:::agent
+        Auditor --> |"Step 1: Ingestion"| PDF["📄 PDF Loader"]:::agent
+        PDF --> |"Raw Text"| Splitter["✂️ Text Splitter"]:::agent
+        Splitter --> |"Chunks"| VectorDB[("🗄️ Vector Store")]:::agent
+        VectorDB --> |"Retrieval"| Audit_LLM["⚡ Gemini 2.5 Flash"]:::external
+        Audit_LLM --> |"Extracts Clauses"| Risk_Engine{"⚠️ Risk Analyzer"}:::decision
+        Risk_Engine --> |"High Risk"| Flag["🚩 Red Flag"]:::agent
+        Risk_Engine --> |"Safe"| Pass["✅ Green Check"]:::agent
         
         %% Path 2: The Courtroom
-        Router --> |"Dispute Simulation"| Court[⚖️ Courtroom Agent]:::agent
-        Court --> |"Case Context"| Judge[�‍⚖️ Judge (Gemini Pro)]:::external
-        Judge --> |"Starts Session"| Lawyer_A[🐺 Prosecution (Groq)]:::external
-        Judge --> |"Starts Session"| Lawyer_B[🛡️ Defense (Groq)]:::external
+        Router --> |"Dispute Simulation"| Court["⚖️ Courtroom Agent"]:::agent
+        Court --> |"Case Context"| Judge["👨‍⚖️ Judge (Gemini Pro)"]:::external
+        Judge --> |"Starts Session"| Lawyer_A["🐺 Prosecution (Groq)"]:::external
+        Judge --> |"Starts Session"| Lawyer_B["🛡️ Defense (Groq)"]:::external
         Lawyer_A <--> |"Debate Loop"| Lawyer_B
         Lawyer_A & Lawyer_B --> |"Arguments"| Judge
-        Judge --> |"Final Verdict"| Verdict[📜 Judgment]:::agent
+        Judge --> |"Final Verdict"| Verdict["📜 Judgment"]:::agent
 
         %% Path 3: The Sentinel
-        Router --> |"Background Check"| Sentinel[🕵️ Sentinel Agent]:::agent
-        Sentinel --> |"Query"| Search[🌐 DuckDuckGo]:::external
-        Search --> |"Results"| Sentiment{❤️ Sentiment Analysis}:::decision
-        Sentiment --> |"Negative"| Scam_Alert[� Scam Alert]:::agent
+        Router --> |"Background Check"| Sentinel["🕵️ Sentinel Agent"]:::agent
+        Sentinel --> |"Query"| Search["🌐 DuckDuckGo"]:::external
+        Search --> |"Results"| Sentiment{"❤️ Sentiment Analysis"}:::decision
+        Sentiment --> |"Negative"| Scam_Alert["🚨 Scam Alert"]:::agent
     end
 
     subgraph "Output Layer"
